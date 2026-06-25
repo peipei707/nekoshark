@@ -66,7 +66,7 @@
   .eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:800;
     letter-spacing:.28em;text-transform:uppercase;opacity:.6;margin-bottom:26px}
   .eyebrow::before{content:"";width:26px;height:2px;background:var(--ink)}
-  h1{font-size:clamp(48px,8.5vw,118px);line-height:.86;font-weight:900;letter-spacing:-.02em}
+  h1{font-size:clamp(42px,7.6vw,116px);line-height:1.02;font-weight:900;letter-spacing:-.01em}
   h1 .o{color:var(--orange)}
   h1 .stroke{-webkit-text-stroke:2px var(--ink);color:transparent}
   .lead{margin-top:28px;max-width:30ch;font-size:clamp(15px,1.6vw,18px);line-height:1.6;opacity:.78}
@@ -122,7 +122,7 @@
   .reveal{opacity:0;transform:translateY(40px);transition:opacity .7s,transform .7s}
   .reveal.in{opacity:1;transform:none}
   .sec-head{font-size:12px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;opacity:.5;margin-bottom:18px}
-  h2{font-size:clamp(32px,5vw,64px);line-height:1;font-weight:900;letter-spacing:-.02em;max-width:16ch}
+  h2{font-size:clamp(30px,5vw,64px);line-height:1.08;font-weight:900;letter-spacing:-.01em;max-width:16ch}
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:60px}
   .card{border:2px solid var(--ink);border-radius:22px;padding:34px 28px;background:var(--cream);
     transition:transform .25s,box-shadow .25s,background .25s;position:relative;overflow:hidden}
@@ -156,11 +156,17 @@
 
   @media(max-width:880px){
     body{cursor:auto}.cur,.trail{display:none}
-    .hero{grid-template-columns:1fr;text-align:center;padding-top:120px;gap:40px}
-    .hero-copy{order:2}.stage{order:1}.mascot{width:min(74vw,420px)}
+    .hero{grid-template-columns:1fr;text-align:center;padding-top:110px;gap:30px;min-height:auto;padding-bottom:40px}
+    .hero-copy{order:2}.stage{order:1}.mascot{width:min(72vw,400px)}
+    h1{line-height:1.1;letter-spacing:0}
+    h2{line-height:1.14}
+    .eyebrow{margin-bottom:18px}
     .eyebrow,.cta{justify-content:center}.lead{margin-left:auto;margin-right:auto}
-    .cards{grid-template-columns:1fr}.split{grid-template-columns:1fr;gap:30px}
+    .cards{grid-template-columns:1fr}.split{grid-template-columns:1fr;gap:26px}
+    .split .big{line-height:1}
+    .tags{justify-content:center}
     .navlinks{display:none}
+    .scrollcue{display:none}
   }
 </style>
 </head>
@@ -243,7 +249,7 @@
       <div class="tags">
         <span class="tag">暖白 × 黑线</span>
         <span class="tag">做旧涂装</span>
-        <span class="tag">3A 机能</span>
+        <span class="tag">机能美学</span>
         <span class="tag">限量编号</span>
         <span class="tag">硬核可动</span>
       </div>
@@ -302,40 +308,75 @@
                {duration:650,easing:'ease-out'}).onfinish=()=>t.remove();
   }
 
-  // ---- the interactive logo: tilt + paint-on color ----
+  // ---- the one interactive logo ----
   const stage=document.getElementById('stage');
   const mascot=document.getElementById('mascot');
   const color=document.querySelector('.m-color');
-  function onMove(e){
-    const r=mascot.getBoundingClientRect();
-    const px=(e.clientX-r.left)/r.width;
-    const py=(e.clientY-r.top)/r.height;
-    // tilt
-    const tx=(px-.5)*16, ty=(.5-py)*16;
-    mascot.style.transform=`rotateY(${tx}deg) rotateX(${ty}deg) translateZ(0)`;
-    // paint reveal follows cursor
-    color.style.setProperty('--mx',(px*100)+'%');
-    color.style.setProperty('--my',(py*100)+'%');
-    color.style.setProperty('--r','46%');
+  const hint=document.querySelector('.hint');
+  const isTouch=matchMedia('(hover:none)').matches || 'ontouchstart' in window;
+  if(isTouch && hint) hint.textContent='👆 点一下 · 滑一下上色';
+
+  // helper: paint color through a circle at a point on the mascot
+  function paintAt(cx,cy,r){
+    const b=mascot.getBoundingClientRect();
+    color.style.setProperty('--mx',((cx-b.left)/b.width*100)+'%');
+    color.style.setProperty('--my',((cy-b.top)/b.height*100)+'%');
+    color.style.setProperty('--r',r);
     stage.classList.add('live');
   }
-  stage.addEventListener('mousemove',onMove);
+  function pounce(){
+    mascot.animate([{scale:'1'},{scale:'.94'},{scale:'1.04'},{scale:'1'}],
+      {duration:430,easing:'cubic-bezier(.2,.8,.2,1)'});
+  }
+
+  // idle "breathing" float — runs on both desktop(idle) and mobile
+  let pointing=false;
+  (function float(){
+    if(!pointing){
+      const t=performance.now()/1000;
+      mascot.style.transform=
+        `rotateY(${Math.sin(t*0.8)*7}deg) rotateX(${Math.cos(t*0.65)*4}deg) translateY(${Math.sin(t*1.05)*8}px)`;
+    }
+    requestAnimationFrame(float);
+  })();
+
+  // ---- desktop: cursor tilt + paint follows pointer ----
+  stage.addEventListener('mousemove',e=>{
+    pointing=true;
+    const b=mascot.getBoundingClientRect();
+    const px=(e.clientX-b.left)/b.width, py=(e.clientY-b.top)/b.height;
+    mascot.style.transform=`rotateY(${(px-.5)*16}deg) rotateX(${(.5-py)*16}deg)`;
+    paintAt(e.clientX,e.clientY,'46%');
+  });
   stage.addEventListener('mouseleave',()=>{
-    mascot.style.transform='';
-    color.style.setProperty('--r','0px');
-    stage.classList.remove('live');
+    pointing=false; color.style.setProperty('--r','0px'); stage.classList.remove('live');
   });
-  // click = pounce + full splash
-  mascot.addEventListener('click',()=>{
-    color.style.setProperty('--r','150%');
-    mascot.animate([{scale:'1'},{scale:'.93'},{scale:'1.04'},{scale:'1'}],
-      {duration:420,easing:'cubic-bezier(.2,.8,.2,1)'});
+  mascot.addEventListener('click',()=>{ color.style.setProperty('--r','160%'); pounce(); });
+
+  // ---- mobile: touch to paint, drag to spread, lift = full color + pounce ----
+  stage.addEventListener('touchstart',e=>{
+    pointing=true; const t=e.touches[0]; paintAt(t.clientX,t.clientY,'42%');
+  },{passive:true});
+  stage.addEventListener('touchmove',e=>{
+    const t=e.touches[0]; paintAt(t.clientX,t.clientY,'58%');
+  },{passive:true});
+  stage.addEventListener('touchend',()=>{
+    color.style.setProperty('--r','170%'); pounce();
+    setTimeout(()=>{pointing=false;},500);
   });
-  // touch: tap to splash
-  stage.addEventListener('touchstart',()=>{
-    color.style.setProperty('--mx','50%');color.style.setProperty('--my','45%');
-    color.style.setProperty('--r','150%');stage.classList.add('live');
-  });
+
+  // first-visit nudge on touch: a quick auto color sweep so users notice it reacts
+  if(isTouch){
+    addEventListener('load',()=>setTimeout(()=>{
+      const b=mascot.getBoundingClientRect();
+      paintAt(b.left+b.width*0.5,b.top+b.height*0.45,'0%');
+      let p=0; const sweep=setInterval(()=>{
+        p+=0.08; color.style.setProperty('--r',(p*90)+'%');
+        if(p>=1){clearInterval(sweep);
+          setTimeout(()=>{color.style.setProperty('--r','0px');stage.classList.remove('live');},900);}
+      },28);
+    },900));
+  }
 
   // ---- scroll reveal ----
   const io=new IntersectionObserver(es=>{
