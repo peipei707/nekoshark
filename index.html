@@ -182,10 +182,9 @@
   footer{position:relative;background:var(--ink);color:var(--cream);text-align:center;overflow:hidden;
     padding:clamp(80px,13vh,150px) 20px calc(46px + env(safe-area-inset-bottom))}
   footer h2{margin:0 auto;color:var(--cream);max-width:none;
-    font-size:clamp(38px,8vw,104px);line-height:1.18;font-weight:700}
+    font-size:clamp(36px,7.4vw,100px);line-height:1.28;font-weight:700;padding-bottom:.12em}
   footer h2 .o{color:var(--orange)}
-  .foot-sub{margin-top:14px;font-size:14px;opacity:.55}
-  footer .btn{margin-top:34px;background:var(--cream);color:var(--ink);border-color:var(--cream)}
+  footer .btn{margin-top:44px;background:var(--cream);color:var(--ink);border-color:var(--cream)}
   @media(hover:hover){footer .btn:hover{background:var(--orange);border-color:var(--orange);color:var(--ink)}}
   .foot-meta{margin-top:58px;font-family:var(--disp);font-size:12px;letter-spacing:.08em;opacity:.42;
     display:flex;gap:22px;justify-content:center;flex-wrap:wrap}
@@ -212,7 +211,7 @@
     .hero-copy{order:2}.stage{order:1}.mascot{width:min(74vw,380px)}
     h1{font-size:clamp(40px,11vw,68px);line-height:1.18;letter-spacing:0}
     h2{font-size:clamp(28px,7.4vw,46px);line-height:1.22}
-    footer h2{line-height:1.22}
+    footer h2{line-height:1.3;font-size:clamp(34px,8.6vw,80px)}
     .eyebrow{margin-bottom:16px}.eyebrow,.cta,.tags{justify-content:center}
     .lead,.p{margin-left:auto;margin-right:auto}
     .navlinks{display:none}
@@ -264,7 +263,6 @@
         <img class="m-line"  src="assets/mascot_line.png" alt="nekoSHARK 吉祥物">
       </div>
     </div>
-    <div class="hint" id="hint"><span class="pulse"></span>戳一下,它会叫</div>
   </div>
 
   <div class="scrollcue">SCROLL<i></i></div>
@@ -280,8 +278,8 @@
 <section id="numbers">
   <div class="sec-head" data-rev="up">/ 00 — The Spec</div>
   <div class="stats">
-    <div class="stat" data-rev="up"><div class="n" data-count="14"><span class="v">0</span><span class="u">关节点</span></div><div class="l">从冲浪到摊平,随手成姿</div></div>
-    <div class="stat" data-rev="up" data-d="100"><div class="n" data-count="18"><span class="v">0</span><span class="u">cm 身高</span></div><div class="l">桌面陈列刚刚好的存在感</div></div>
+    <div class="stat" data-rev="up"><div class="n" data-count="20"><span class="v">0</span><span class="u">关节点</span></div><div class="l">从冲浪到摊平,随手成姿</div></div>
+    <div class="stat" data-rev="up" data-d="100"><div class="n" data-count="28"><span class="v">0</span><span class="u">cm 身高</span></div><div class="l">桌面陈列刚刚好的存在感</div></div>
     <div class="stat" data-rev="up" data-d="200"><div class="n" data-count="999"><span class="v">0</span><span class="u">限量</span></div><div class="l">全球编号,售完即绝</div></div>
   </div>
 </section>
@@ -339,8 +337,7 @@
 <footer id="join">
   <div class="foot-glow"></div>
   <h2 data-rev="scale">来摸摸这只<br><span class="o">猫鲨</span>。</h2>
-  <div class="foot-sub" data-rev="up" data-d="120">（小声提醒:它真的会叫。）</div>
-  <a href="#" class="btn rippable" data-rev="up" data-d="200">预约首发 →</a>
+  <a href="#" class="btn rippable" data-rev="up" data-d="120">预约首发 →</a>
   <div class="foot-meta">
     <span>© 2026 nekoSHARK</span><span>Articulated Art Figures</span><span>Made with 🦈 & 🐱</span>
   </div>
@@ -383,12 +380,10 @@
   const mascot=document.getElementById('mascot');
   const mascotIn=document.getElementById('mascotIn');
   const color=document.querySelector('.m-color');
-  const hint=document.getElementById('hint');
-  if(isTouch && hint) hint.childNodes[1].textContent='点一下,它会叫';
 
-  let pointing=false, usedOnce=false;
-  function markUsed(){ if(!usedOnce){usedOnce=true; stage.classList.add('used');} }
+  let pointing=false, colorLocked=false;
   function paintAt(cx,cy,r){
+    if(colorLocked) return;                       // 已永久上色,别再缩小
     const b=mascot.getBoundingClientRect();
     color.style.setProperty('--mx',((cx-b.left)/b.width*100)+'%');
     color.style.setProperty('--my',((cy-b.top)/b.height*100)+'%');
@@ -401,7 +396,13 @@
        {transform:'scale(1.05) rotate(1.5deg)'},{transform:'scale(1) rotate(0)'}],
       {duration:480,easing:'cubic-bezier(.2,.8,.2,1)'});
   }
-  function tapLogo(cx,cy){ markUsed(); meow(); pounce(); if(cx!=null) paintAt(cx,cy,'170%'); else { color.style.setProperty('--r','170%'); stage.classList.add('live'); } }
+  function tapLogo(cx,cy){                          // 点/戳:喵 + 弹跳 + 永久上色
+    meow(); pounce();
+    if(cx!=null){ const b=mascot.getBoundingClientRect();
+      color.style.setProperty('--mx',((cx-b.left)/b.width*100)+'%');
+      color.style.setProperty('--my',((cy-b.top)/b.height*100)+'%'); }
+    color.style.setProperty('--r','230%'); stage.classList.add('live'); colorLocked=true;
+  }
 
   if(!isTouch){
     stage.addEventListener('mousemove',e=>{
@@ -411,17 +412,14 @@
       mascot.style.transform=`rotateY(${(px-.5)*16}deg) rotateX(${(.5-py)*16}deg)`;
       paintAt(e.clientX,e.clientY,'46%');
     });
-    stage.addEventListener('mouseleave',()=>{pointing=false;color.style.setProperty('--r','0px');stage.classList.remove('live');});
+    stage.addEventListener('mouseleave',()=>{pointing=false;
+      if(!colorLocked){color.style.setProperty('--r','0px');stage.classList.remove('live');}});
     stage.addEventListener('click',e=>tapLogo(e.clientX,e.clientY));
   } else {
-    let moved=false;
-    stage.addEventListener('touchstart',e=>{pointing=true;moved=false;const t=e.touches[0];paintAt(t.clientX,t.clientY,'48%');},{passive:true});
-    stage.addEventListener('touchmove',e=>{moved=true;const t=e.touches[0];paintAt(t.clientX,t.clientY,'62%');},{passive:true});
-    stage.addEventListener('touchend',e=>{
-      const t=e.changedTouches[0];
-      tapLogo(t.clientX,t.clientY);                // 喵 + 上色 + 弹跳
-      setTimeout(()=>{pointing=false;},500);
-    },{passive:true});
+    stage.addEventListener('touchstart',e=>{pointing=true;const t=e.touches[0];paintAt(t.clientX,t.clientY,'54%');},{passive:true});
+    stage.addEventListener('touchmove',e=>{const t=e.touches[0];paintAt(t.clientX,t.clientY,'66%');},{passive:true});
+    stage.addEventListener('touchend',e=>{const t=e.changedTouches[0];tapLogo(t.clientX,t.clientY);
+      setTimeout(()=>{pointing=false;},400);},{passive:true});
   }
 
   /* ---------- ripple on buttons ---------- */
@@ -508,35 +506,15 @@
     if(half>0 && -mq>=half) mq+=half;
     track.style.transform=`translate3d(${mq}px,0,0)`;
 
-    // hero mascot: scroll-paint + idle float (mobile/idle)
-    const heroH=innerHeight;
-    const hp=Math.min(1,Math.max(0,curY/(heroH*.85)));
+    // hero mascot: idle float（始终轻微漂浮,上色与否互不影响)
     if(!pointing){
       const t=now/1000;
       mascot.style.transform=
         `rotateY(${Math.sin(t*.8)*6}deg) rotateX(${Math.cos(t*.62)*3.5}deg) translateY(${Math.sin(t*1.05)*7 - curY*.02}px)`;
-      // colour in as you scroll through the hero (great on mobile)
-      if(!usedOnce){
-        if(hp>0.02){ color.style.setProperty('--mx','50%'); color.style.setProperty('--my','46%');
-          color.style.setProperty('--r',(hp*150)+'%'); stage.classList.add('live'); }
-        else { color.style.setProperty('--r','0px'); stage.classList.remove('live'); }
-      }
     }
     requestAnimationFrame(raf);
   }
   requestAnimationFrame(raf);
-
-  /* gentle invite on touch: a quick colour sweep after load */
-  if(isTouch){
-    addEventListener('load',()=>setTimeout(()=>{
-      if(usedOnce)return; let p=0;
-      color.style.setProperty('--mx','50%');color.style.setProperty('--my','46%');
-      const sw=setInterval(()=>{ if(usedOnce){clearInterval(sw);return;}
-        p+=.06; color.style.setProperty('--r',(Math.sin(p*Math.PI)*120)+'%'); stage.classList.add('live');
-        if(p>=1){clearInterval(sw); if(!usedOnce){color.style.setProperty('--r','0px');stage.classList.remove('live');}}
-      },26);
-    },1100));
-  }
 })();
 </script>
 </body>
