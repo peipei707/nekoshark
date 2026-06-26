@@ -210,6 +210,8 @@
       padding-top:clamp(96px,16vh,130px);padding-bottom:46px;gap:26px}
     .hero-copy{order:2}.stage{order:1}.mascot{width:min(74vw,380px)}
     h1{font-size:clamp(40px,11vw,68px);line-height:1.18;letter-spacing:0}
+    /* 手机上镂空描边的中文易发虚/破碎,改实心填充 */
+    h1 .stroke,.bigword .stroke{-webkit-text-stroke:0;color:var(--ink)}
     h2{font-size:clamp(28px,7.4vw,46px);line-height:1.22}
     footer h2{line-height:1.3;font-size:clamp(34px,8.6vw,80px)}
     .eyebrow{margin-bottom:16px}.eyebrow,.cta,.tags{justify-content:center}
@@ -416,10 +418,25 @@
       if(!colorLocked){color.style.setProperty('--r','0px');stage.classList.remove('live');}});
     stage.addEventListener('click',e=>tapLogo(e.clientX,e.clientY));
   } else {
-    stage.addEventListener('touchstart',e=>{pointing=true;const t=e.touches[0];paintAt(t.clientX,t.clientY,'54%');},{passive:true});
+    let fadeTimer=null;
+    function fadeOut(){                              // 平滑收回颜色
+      let r=180;
+      (function step(){ r-=7; color.style.setProperty('--r',Math.max(0,r)+'%');
+        if(r>0) requestAnimationFrame(step); else stage.classList.remove('live'); })();
+    }
+    stage.addEventListener('touchstart',e=>{pointing=true;if(fadeTimer)clearTimeout(fadeTimer);
+      const t=e.touches[0];paintAt(t.clientX,t.clientY,'54%');},{passive:true});
     stage.addEventListener('touchmove',e=>{const t=e.touches[0];paintAt(t.clientX,t.clientY,'66%');},{passive:true});
-    stage.addEventListener('touchend',e=>{const t=e.changedTouches[0];tapLogo(t.clientX,t.clientY);
-      setTimeout(()=>{pointing=false;},400);},{passive:true});
+    stage.addEventListener('touchend',e=>{const t=e.changedTouches[0];
+      meow(); pounce();                             // 喵 + 弹跳
+      const b=mascot.getBoundingClientRect();
+      color.style.setProperty('--mx',((t.clientX-b.left)/b.width*100)+'%');
+      color.style.setProperty('--my',((t.clientY-b.top)/b.height*100)+'%');
+      color.style.setProperty('--r','220%'); stage.classList.add('live');
+      if(fadeTimer)clearTimeout(fadeTimer);
+      fadeTimer=setTimeout(fadeOut,3000);           // 3 秒后褪回黑线
+      setTimeout(()=>{pointing=false;},400);
+    },{passive:true});
   }
 
   /* ---------- ripple on buttons ---------- */
