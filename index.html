@@ -93,7 +93,7 @@
     display:flex;align-items:center;justify-content:center;margin:8px 0 2px}
   /* directional soft light from the upper-left, gradient falloff */
   .glow{position:absolute;z-index:1;width:128%;height:128%;left:-10%;top:-16%;pointer-events:none;will-change:transform,opacity;
-    background:radial-gradient(58% 58% at 36% 26%, var(--pool) 0%, rgba(244,235,211,.7) 22%, rgba(244,235,211,.24) 44%, transparent 64%)}
+    background:radial-gradient(58% 58% at 44% 28%, var(--pool) 0%, rgba(244,235,211,.7) 22%, rgba(244,235,211,.24) 44%, transparent 64%)}
   .floor{position:absolute;z-index:0;bottom:5%;left:57%;transform:translateX(-50%);width:52%;height:7%;border-radius:50%;
     background:radial-gradient(circle,rgba(0,0,0,.5),transparent 70%);filter:blur(8px);pointer-events:none;will-change:transform,opacity}
   .mascot{position:relative;z-index:2;width:80%;aspect-ratio:1462/1587;perspective:1000px}
@@ -104,6 +104,25 @@
   .m-color{z-index:1;
     -webkit-mask-image:radial-gradient(circle var(--r,0px) at var(--mx,52%) var(--my,46%),#000 56%,transparent 72%);
     mask-image:radial-gradient(circle var(--r,0px) at var(--mx,52%) var(--my,46%),#000 56%,transparent 72%)}
+  /* louvered stage light — bright/dark slats like real theatre lighting */
+  .slats{position:absolute;z-index:1;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:.5;
+    background:repeating-linear-gradient(96deg,rgba(244,235,211,.18) 0 13px,transparent 13px 42px);
+    -webkit-mask-image:radial-gradient(58% 58% at 44% 28%,#000 26%,transparent 64%);
+    mask-image:radial-gradient(58% 58% at 44% 28%,#000 26%,transparent 64%)}
+  /* glitchy RGB-split headline (dreamcore-style) */
+  .glitch{position:relative}
+  .glitch::before,.glitch::after{content:attr(data-t);position:absolute;left:0;top:0;width:100%;
+    -webkit-text-stroke:0;pointer-events:none}
+  .glitch::before{color:var(--orange);animation:gA 3.4s steps(2) infinite}
+  .glitch::after{color:var(--blue);animation:gB 4.3s steps(2) infinite}
+  @keyframes gA{0%,90%,100%{opacity:0;transform:none}91%{opacity:.72;transform:translate(-3px,1px)}95%{opacity:.72;transform:translate(2px,-2px)}}
+  @keyframes gB{0%,92%,100%{opacity:0;transform:none}93%{opacity:.72;transform:translate(3px,-1px)}97%{opacity:.72;transform:translate(-2px,2px)}}
+  /* CRT text flicker + signal tear (tear synced to the rolling band) */
+  @keyframes txtflick{0%,100%{opacity:1}3%{opacity:.86}5%{opacity:1}44%{opacity:1}46%{opacity:.8}48%{opacity:1}}
+  @keyframes vtear{0%,88%,100%{transform:translate3d(0,0,0)}89%{transform:translate3d(-5px,0,0) skewX(-.5deg)}90.5%{transform:translate3d(7px,0,0)}92%{transform:translate3d(-3px,0,0)}93.5%{transform:translate3d(0,0,0)}}
+  .fx-both{animation:txtflick 6s ease-in-out infinite, vtear 8s linear infinite}
+  .fx-tear{animation:vtear 8s linear infinite}
+  .stat .n,section h2,footer h2,.bigword{animation:txtflick 6.5s ease-in-out infinite}
   .scanhint{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim);margin-top:6px}
 
   h1{font-size:clamp(56px,9.5vw,148px);line-height:.92;font-weight:700;letter-spacing:-.025em;margin-top:12px}
@@ -214,7 +233,7 @@
 <div class="crt grain"></div>
 <div class="crt vig"></div>
 <div class="crt roll"></div>
-<div class="osd"><span class="rec"></span>REC · CH-01 · nekoSHARK</div>
+<div class="osd fx-tear"><span class="rec"></span>REC · CH-01 · nekoSHARK</div>
 <div class="progress" id="progress"></div>
 
 <nav id="nav">
@@ -229,8 +248,9 @@
   <span class="eyebrow rev">Articulated Art Figures</span>
   <div class="stage" id="stage">
     <div class="glow"></div>
+    <div class="slats"></div>
     <div class="floor"></div>
-    <div class="mascot" id="mascot">
+    <div class="mascot fx-tear" id="mascot">
       <div class="mascot-in" id="mascotIn">
         <img class="m-color" src="assets/mascot_color.png" alt="">
         <img class="m-line"  src="assets/mascot_line.png" alt="nekoSHARK 吉祥物:赖在鲨鱼鳍上的橘猫">
@@ -238,7 +258,7 @@
     </div>
   </div>
   <span class="scanhint rev">划过 / 触摸 · 点亮它</span>
-  <h1>会<span class="o">动</span>的<span class="stroke">猫鲨</span></h1>
+  <h1 class="fx-both">会<span class="o">动</span>的<span class="stroke glitch" data-t="猫鲨">猫鲨</span></h1>
   <p class="lead rev">一只赖在鲨鱼鳍上的猫。可动关节,做旧涂装,<b>收藏级硬核手感</b>。</p>
   <div class="cta rev">
     <a href="#figures" class="btn magnetic"><span class="fill"></span><span class="lbl">▶ 看看人偶</span></a>
@@ -414,7 +434,7 @@
 
   /* the light is alive — gentle drift + slow breathe, rare soft flicker (no harsh strobe) */
   gsap.to('.glow',{x:16,y:10,duration:8.5,ease:'sine.inOut',repeat:-1,yoyo:true});
-  gsap.to('.glow',{scale:1.05,duration:6,ease:'sine.inOut',repeat:-1,yoyo:true,transformOrigin:'36% 26%'});
+  gsap.to('.glow',{scale:1.05,duration:6,ease:'sine.inOut',repeat:-1,yoyo:true,transformOrigin:'44% 28%'});
   gsap.to('.floor',{scaleX:1.08,opacity:.82,duration:6.2,ease:'sine.inOut',repeat:-1,yoyo:true});
   (function softpulse(){ gsap.to('.glow',{opacity:0.86,duration:.16,yoyo:true,repeat:1,ease:'power1.inOut',
     onComplete:()=>gsap.delayedCall(3+Math.random()*5,softpulse)}); })();
