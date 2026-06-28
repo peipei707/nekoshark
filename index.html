@@ -46,10 +46,8 @@
     background:radial-gradient(122% 96% at 50% 46%, transparent 54%, rgba(0,0,0,.42) 100%);
     box-shadow:inset 0 0 200px 56px rgba(0,0,0,.5), inset 0 0 50px rgba(0,0,0,.42)}
   /* slow rolling refresh band (gentle, not a flicker) */
-  .crt.roll{z-index:133;height:16%;opacity:.5;mix-blend-mode:screen;
-    background:linear-gradient(180deg,transparent,rgba(255,247,230,.05) 45%,rgba(255,247,230,.05) 55%,transparent);
-    animation:roll 8s linear infinite}
-  @keyframes roll{0%{transform:translateY(-18%)}100%{transform:translateY(640%)}}
+  .crt.roll{z-index:133;height:13%;opacity:.6;mix-blend-mode:screen;will-change:transform;
+    background:linear-gradient(180deg,transparent,rgba(255,247,230,.07) 45%,rgba(255,247,230,.07) 55%,transparent)}
 
   .osd{position:fixed;top:74px;left:clamp(16px,4vw,48px);z-index:134;pointer-events:none;
     font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:rgba(232,184,147,.6);
@@ -82,9 +80,9 @@
   .btn.alt{border-color:var(--blue);color:var(--blue)}.btn.alt .fill{background:var(--blue)}
 
   /* ===== HERO — mascot just lit by an angled soft light, no frame ===== */
-  .hero{position:relative;z-index:1;min-height:100dvh;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;text-align:center;gap:4px;
+  .hero{position:relative;z-index:1;min-height:100dvh;display:flex;align-items:center;justify-content:center;
     padding:120px clamp(16px,5vw,48px) 70px;max-width:var(--maxw);margin:0 auto}
+  .hero-inner{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;width:100%;will-change:transform}
   .hero .eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;
     letter-spacing:.26em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
   .hero .eyebrow::before,.hero .eyebrow::after{content:"";width:22px;height:1px;background:var(--dim)}
@@ -93,7 +91,7 @@
     display:flex;align-items:center;justify-content:center;margin:8px 0 2px}
   /* directional soft light from the upper-left, gradient falloff */
   .glow{position:absolute;z-index:1;width:128%;height:128%;left:-10%;top:-16%;pointer-events:none;will-change:transform,opacity;
-    background:radial-gradient(58% 58% at 44% 28%, var(--pool) 0%, rgba(244,235,211,.7) 22%, rgba(244,235,211,.24) 44%, transparent 64%)}
+    background:radial-gradient(72% 66% at 49% 22%, var(--pool) 0%, rgba(244,235,211,.58) 28%, rgba(244,235,211,.2) 52%, transparent 74%)}
   .floor{position:absolute;z-index:0;bottom:5%;left:57%;transform:translateX(-50%);width:52%;height:7%;border-radius:50%;
     background:radial-gradient(circle,rgba(0,0,0,.5),transparent 70%);filter:blur(8px);pointer-events:none;will-change:transform,opacity}
   .mascot{position:relative;z-index:2;width:80%;aspect-ratio:1462/1587;perspective:1000px}
@@ -106,22 +104,21 @@
     mask-image:radial-gradient(circle var(--r,0px) at var(--mx,52%) var(--my,46%),#000 56%,transparent 72%)}
   /* louvered stage light — bright/dark slats like real theatre lighting */
   .slats{position:absolute;z-index:1;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:.5;
-    background:repeating-linear-gradient(96deg,rgba(244,235,211,.18) 0 13px,transparent 13px 42px);
-    -webkit-mask-image:radial-gradient(58% 58% at 44% 28%,#000 26%,transparent 64%);
-    mask-image:radial-gradient(58% 58% at 44% 28%,#000 26%,transparent 64%)}
+    background:repeating-linear-gradient(99deg,rgba(244,235,211,.15) 0 12px,transparent 12px 44px);
+    -webkit-mask-image:radial-gradient(72% 66% at 49% 22%,#000 24%,transparent 66%);
+    mask-image:radial-gradient(72% 66% at 49% 22%,#000 24%,transparent 66%)}
   /* glitchy RGB-split headline (dreamcore-style) */
   .glitch{position:relative}
   .glitch::before,.glitch::after{content:attr(data-t);position:absolute;left:0;top:0;width:100%;
     -webkit-text-stroke:0;pointer-events:none}
   .glitch::before{color:var(--orange);animation:gA 3.4s steps(2) infinite}
   .glitch::after{color:var(--blue);animation:gB 4.3s steps(2) infinite}
-  @keyframes gA{0%,90%,100%{opacity:0;transform:none}91%{opacity:.72;transform:translate(-3px,1px)}95%{opacity:.72;transform:translate(2px,-2px)}}
-  @keyframes gB{0%,92%,100%{opacity:0;transform:none}93%{opacity:.72;transform:translate(3px,-1px)}97%{opacity:.72;transform:translate(-2px,2px)}}
+  @keyframes gA{0%,92%,100%{opacity:0;transform:none}93%{opacity:.6;transform:translate(-1.5px,.5px)}96%{opacity:.6;transform:translate(1.2px,-1px)}}
+  @keyframes gB{0%,93%,100%{opacity:0;transform:none}94%{opacity:.6;transform:translate(1.5px,-.5px)}97%{opacity:.6;transform:translate(-1.2px,1px)}}
   /* CRT text flicker + signal tear (tear synced to the rolling band) */
   @keyframes txtflick{0%,100%{opacity:1}3%{opacity:.86}5%{opacity:1}44%{opacity:1}46%{opacity:.8}48%{opacity:1}}
   @keyframes vtear{0%,88%,100%{transform:translate3d(0,0,0)}89%{transform:translate3d(-5px,0,0) skewX(-.5deg)}90.5%{transform:translate3d(7px,0,0)}92%{transform:translate3d(-3px,0,0)}93.5%{transform:translate3d(0,0,0)}}
-  .fx-both{animation:txtflick 6s ease-in-out infinite, vtear 8s linear infinite}
-  .fx-tear{animation:vtear 8s linear infinite}
+  .fx-both{animation:txtflick 6s ease-in-out infinite}
   .stat .n,section h2,footer h2,.bigword{animation:txtflick 6.5s ease-in-out infinite}
   .scanhint{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim);margin-top:6px}
 
@@ -233,7 +230,6 @@
 <div class="crt grain"></div>
 <div class="crt vig"></div>
 <div class="crt roll"></div>
-<div class="osd fx-tear"><span class="rec"></span>REC · CH-01 · nekoSHARK</div>
 <div class="progress" id="progress"></div>
 
 <nav id="nav">
@@ -245,12 +241,13 @@
 </nav>
 
 <header class="hero" id="top">
+  <div class="hero-inner" id="heroInner">
   <span class="eyebrow rev">Articulated Art Figures</span>
   <div class="stage" id="stage">
     <div class="glow"></div>
     <div class="slats"></div>
     <div class="floor"></div>
-    <div class="mascot fx-tear" id="mascot">
+    <div class="mascot" id="mascot">
       <div class="mascot-in" id="mascotIn">
         <img class="m-color" src="assets/mascot_color.png" alt="">
         <img class="m-line"  src="assets/mascot_line.png" alt="nekoSHARK 吉祥物:赖在鲨鱼鳍上的橘猫">
@@ -263,6 +260,7 @@
   <div class="cta rev">
     <a href="#figures" class="btn magnetic"><span class="fill"></span><span class="lbl">▶ 看看人偶</span></a>
     <a href="#story" class="btn alt magnetic"><span class="fill"></span><span class="lbl">它的故事</span></a>
+  </div>
   </div>
 </header>
 
@@ -412,6 +410,25 @@
   function prog(){const max=document.documentElement.scrollHeight-innerHeight;
     progress.style.width=(max>0?Math.min(100,scrollY/max*100):0)+'%';}
   addEventListener('scroll',prog,{passive:true}); prog();
+
+  /* CRT signal: rolling band drags the picture sideways + continuous judder */
+  const rollEl=document.querySelector('.crt.roll');
+  const heroInner=document.getElementById('heroInner');
+  let rt0=performance.now(),jx=0,jy=0,jt=0;
+  function crtloop(now){
+    const T=6500,p=((now-rt0)%T)/T,vh=innerHeight;
+    const bandY=-0.16*vh+p*1.34*vh;
+    if(rollEl) rollEl.style.transform='translateY('+bandY.toFixed(1)+'px)';
+    if(heroInner){
+      const r=heroInner.getBoundingClientRect(),cy=r.top+r.height/2,reach=vh*0.6;
+      const near=Math.max(0,1-Math.abs(cy-bandY)/reach);
+      const sway=near*near*13*Math.sin(p*6.2831);
+      if(now-jt>85){ jx=(Math.random()-0.5)*2.2; jy=(Math.random()-0.5)*1.4; jt=now; }
+      heroInner.style.transform='translate('+(sway+jx).toFixed(2)+'px,'+jy.toFixed(2)+'px)';
+    }
+    requestAnimationFrame(crtloop);
+  }
+  if(!reduce) requestAnimationFrame(crtloop);
 
   if(reduce || !hasGSAP){ document.querySelectorAll('[data-count]').forEach(el=>count(el)); return; }
   gsap.registerPlugin(ScrollTrigger);
