@@ -7,17 +7,16 @@
 <meta name="description" content="nekoSHARK 猫鲨:一只赖在鲨鱼鳍上的猫。可动关节、做旧涂装、收藏级硬核手感的艺术可动人偶。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#100E0C; --bg2:#16130E; --panel:#1B1712; --panel2:#221D16; --line:#322C22;
-    --chamber:#E9E1D0; --chamber2:#DCD2BC;
-    --text:#ECE5D6; --muted:#9A9081; --dim:#6A6253;
-    --orange:#F0890F; --orange-soft:#E8972A; --blue:#5FB8DC; --yellow:#E3C24A; --navy:#232844;
-    --maxw:1280px;
+    --bg:#1B1611; --bg2:#221C15; --panel:#272019; --line:#3A3128;
+    --text:#F0E9DB; --muted:#A99D8A; --dim:#766B5A;
+    --pool:#F3EAD2; --pool-2:#E7DABA;
+    --orange:#F0890F; --orange-soft:#E8972A; --blue:#5FB8DC; --navy:#232844;
+    --maxw:1240px;
     --disp:"Space Grotesk","PingFang SC","Microsoft YaHei",sans-serif;
     --mono:"Space Mono",ui-monospace,monospace;
-    --crt:"VT323","Space Mono",monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%}
@@ -25,89 +24,62 @@
     overflow-x:hidden;-webkit-font-smoothing:antialiased}
   a{color:inherit;text-decoration:none}
   img{display:block}
-  ::selection{background:var(--orange);color:#0a0805}
+  ::selection{background:var(--orange);color:#1a120a}
 
-  /* ===== facility overlays ===== */
-  .fx{position:fixed;inset:0;pointer-events:none;z-index:120}
-  .fx.scan{background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px);opacity:.5;mix-blend-mode:multiply}
-  .fx.flick{background:rgba(240,137,15,.012);animation:flick .14s steps(2) infinite}
-  @keyframes flick{0%{opacity:.5}50%{opacity:1}100%{opacity:.5}}
-  .fx.vig{box-shadow:inset 0 0 240px 60px rgba(0,0,0,.65)}
-  .fx.grain{opacity:.06;mix-blend-mode:overlay;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+  /* ambient warmth so it never reads as flat black */
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(70% 50% at 50% 18%, rgba(240,137,15,.10), transparent 60%),
+      radial-gradient(90% 70% at 50% 120%, rgba(35,40,68,.30), transparent 70%)}
+  /* fine grain (做旧) */
+  .grain{position:fixed;inset:0;z-index:130;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+  .scan{position:fixed;inset:0;z-index:131;pointer-events:none;opacity:.35;mix-blend-mode:multiply;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 1px,transparent 1px 3px)}
 
-  .progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:200;
-    background:var(--orange);box-shadow:0 0 10px rgba(240,137,15,.8)}
-
-  /* hazard stripe util */
-  .hazard{background-image:repeating-linear-gradient(-45deg,var(--orange) 0 16px,#0d0b08 16px 32px)}
+  .progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:200;background:var(--orange);box-shadow:0 0 10px rgba(240,137,15,.7)}
 
   .mono{font-family:var(--mono);letter-spacing:.04em}
-  .label{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--orange)}
-  .label.dim{color:var(--dim)}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--orange)}
 
-  /* ===== nav ===== */
-  nav{position:fixed;top:0;left:0;width:100%;z-index:130;height:62px;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:0 clamp(16px,4vw,48px);background:rgba(16,14,12,.6);backdrop-filter:blur(6px);
-    border-bottom:1px solid var(--line)}
-  .brand{display:flex;align-items:center;gap:12px}
+  nav{position:fixed;top:0;left:0;width:100%;z-index:140;height:64px;
+    display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,4vw,48px)}
+  .brand{display:flex;align-items:center;gap:11px}
   .brand img{height:24px;filter:brightness(0) invert(.92)}
-  .brand .tag{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--dim);border:1px solid var(--line);padding:3px 6px}
-  .navlinks{display:flex;gap:26px;font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+  .brand .tag{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--dim)}
+  .navlinks{display:flex;gap:26px;font-family:var(--mono);font-size:12px}
   .navlinks a{color:var(--muted);transition:color .25s}
   .navlinks a:hover{color:var(--orange)}
   .nav-cta{display:none}
 
-  /* ===== buttons ===== */
-  .btn{position:relative;display:inline-flex;align-items:center;gap:10px;
-    padding:15px 28px;font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:.06em;
-    border:1.5px solid var(--orange);background:transparent;color:var(--orange);cursor:pointer;
-    overflow:hidden;will-change:transform;transition:color .3s}
+  .btn{position:relative;display:inline-flex;align-items:center;gap:9px;padding:15px 28px;
+    font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:.05em;
+    border:1.5px solid var(--orange);background:transparent;color:var(--orange);cursor:pointer;overflow:hidden;
+    will-change:transform;transition:color .3s}
   .btn .lbl{position:relative;z-index:2}
   .btn .fill{position:absolute;inset:0;background:var(--orange);transform:translateY(101%);transition:transform .4s cubic-bezier(.22,1,.36,1)}
-  @media(hover:hover){.btn:hover{color:#0d0b08}.btn:hover .fill{transform:translateY(0)}}
-  .btn.alt{border-color:var(--blue);color:var(--blue)}
-  .btn.alt .fill{background:var(--blue)}
+  @media(hover:hover){.btn:hover{color:#1a120a}.btn:hover .fill{transform:translateY(0)}}
+  .btn.alt{border-color:var(--blue);color:var(--blue)}.btn.alt .fill{background:var(--blue)}
 
-  /* ===== hero ===== */
-  .hero{position:relative;min-height:100dvh;display:grid;grid-template-columns:1.04fr .96fr;
-    align-items:center;gap:34px;max-width:var(--maxw);margin:0 auto;padding:110px clamp(16px,4vw,48px) 70px}
-  .hero-copy{position:relative;z-index:6}
-  .sys{display:flex;align-items:center;gap:12px;margin-bottom:26px}
-  .sys .dotled{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 8px var(--orange);animation:pulse 1.6s ease-in-out infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-  h1{font-size:clamp(54px,8.6vw,128px);line-height:.96;font-weight:700;letter-spacing:-.02em}
-  h1 .ln{display:block;overflow:hidden}
-  h1 .ln i{display:inline-block;font-style:normal}
-  h1 .o{color:var(--orange);text-shadow:0 0 26px rgba(240,137,15,.55)}
-  h1 .stroke{-webkit-text-stroke:1.5px var(--text);color:transparent}
-  .lead{margin-top:30px;max-width:34ch;font-size:clamp(15px,1.4vw,18px);line-height:1.7;color:var(--muted)}
-  .lead b{color:var(--blue);font-weight:600}
-  .cta{margin-top:38px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  /* ===== HERO — theatrical spotlight, centered ===== */
+  .hero{position:relative;z-index:1;min-height:100dvh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;gap:6px;
+    padding:120px clamp(16px,5vw,48px) 70px;max-width:var(--maxw);margin:0 auto}
+  .hero .eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;
+    letter-spacing:.26em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .hero .eyebrow::before,.hero .eyebrow::after{content:"";width:22px;height:1px;background:var(--dim)}
 
-  /* containment chamber (lit) */
-  .stage{position:relative;z-index:5;display:flex;align-items:center;justify-content:center}
-  .chamber{position:relative;width:min(44vw,520px);aspect-ratio:1/1.04;
-    background:radial-gradient(120% 90% at 50% 30%,var(--chamber) 0%,var(--chamber2) 100%);
-    border:1px solid var(--line);box-shadow:0 0 0 1px rgba(240,137,15,.12),0 40px 120px rgba(0,0,0,.6),inset 0 0 120px rgba(0,0,0,.12);overflow:hidden}
-  .chamber::after{content:"";position:absolute;inset:0;pointer-events:none;
-    background:repeating-linear-gradient(0deg,rgba(20,16,10,.10) 0 1px,transparent 1px 4px);mix-blend-mode:multiply}
-  .corner{position:absolute;width:24px;height:24px;border:2px solid var(--orange);z-index:4}
-  .corner.tl{top:12px;left:12px;border-right:none;border-bottom:none}
-  .corner.tr{top:12px;right:12px;border-left:none;border-bottom:none}
-  .corner.bl{bottom:12px;left:12px;border-right:none;border-top:none}
-  .corner.br{bottom:12px;right:12px;border-left:none;border-top:none}
-  .chamber .clabel{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:4;
-    font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:#5a5142;white-space:nowrap}
-  .chamber .rec{position:absolute;bottom:16px;left:16px;z-index:4;display:flex;align-items:center;gap:7px;
-    font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:#7a3b1a}
-  .chamber .rec b{width:8px;height:8px;border-radius:50%;background:#d23b1a;box-shadow:0 0 8px #d23b1a;animation:pulse 1.3s infinite}
-  .sweep{position:absolute;left:0;right:0;height:34%;z-index:3;pointer-events:none;
-    background:linear-gradient(180deg,transparent,rgba(95,184,220,.16),transparent);
-    animation:sweep 4.6s linear infinite}
-  @keyframes sweep{0%{top:-34%}100%{top:100%}}
-  .mascot{position:absolute;inset:8% 6%;z-index:2;perspective:1000px}
+  /* the stage light */
+  .stage{position:relative;z-index:2;width:min(76vw,560px);aspect-ratio:1/1;
+    display:flex;align-items:center;justify-content:center;margin:6px 0 2px}
+  .beam{position:absolute;top:-46%;left:50%;transform:translateX(-50%);width:62%;height:150%;z-index:1;
+    background:linear-gradient(180deg,rgba(243,234,210,.16),rgba(243,234,210,.04) 46%,transparent 76%);
+    clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);filter:blur(6px);pointer-events:none}
+  .pool{position:absolute;z-index:1;width:96%;height:96%;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at 50% 44%,var(--pool) 0%,rgba(243,234,210,.82) 26%,rgba(243,234,210,.34) 46%,transparent 64%)}
+  .floor{position:absolute;z-index:1;bottom:6%;left:50%;transform:translateX(-50%);width:60%;height:9%;border-radius:50%;
+    background:radial-gradient(circle,rgba(0,0,0,.5),transparent 70%);filter:blur(7px);pointer-events:none}
+  .mascot{position:relative;z-index:2;width:78%;aspect-ratio:1462/1587;perspective:1000px}
   .mascot-in{position:absolute;inset:0;transform-origin:58% 50%}
   .mascot img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
     -webkit-user-drag:none;user-select:none;-webkit-tap-highlight-color:transparent}
@@ -115,113 +87,104 @@
   .m-color{z-index:1;
     -webkit-mask-image:radial-gradient(circle var(--r,0px) at var(--mx,52%) var(--my,46%),#000 56%,transparent 72%);
     mask-image:radial-gradient(circle var(--r,0px) at var(--mx,52%) var(--my,46%),#000 56%,transparent 72%)}
+  .scanhint{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim);margin-top:4px}
 
-  /* ===== marquee (hazard) ===== */
-  .marquee{overflow:hidden;white-space:nowrap;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg2)}
+  h1{font-size:clamp(56px,9.5vw,148px);line-height:.92;font-weight:700;letter-spacing:-.025em;margin-top:10px}
+  h1 .o{color:var(--orange);text-shadow:0 0 30px rgba(240,137,15,.5)}
+  h1 .stroke{-webkit-text-stroke:1.5px var(--text);color:transparent}
+  .lead{margin-top:26px;max-width:36ch;font-size:clamp(15px,1.4vw,18px);line-height:1.7;color:var(--muted)}
+  .lead b{color:var(--blue);font-weight:600}
+  .cta{margin-top:34px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
+
+  /* marquee */
+  .marquee{position:relative;z-index:1;overflow:hidden;white-space:nowrap;padding:16px 0;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg2)}
   .marquee .track{display:inline-flex;font-family:var(--mono);font-weight:700;font-size:clamp(13px,1.6vw,18px);letter-spacing:.08em}
   .marquee .track span{padding:0 14px;display:inline-flex;align-items:center;gap:14px;color:var(--muted)}
-  .marquee .o{color:var(--orange)}.marquee .tri{color:var(--orange)}
+  .marquee .o{color:var(--orange)}.marquee .tri{color:var(--dim)}
 
-  /* ===== sections ===== */
-  section{max-width:var(--maxw);margin:0 auto;padding:clamp(96px,15vh,180px) clamp(16px,4vw,48px)}
-  .sechead{display:flex;align-items:center;gap:14px;margin-bottom:30px}
-  .sechead::before{content:"";flex:0 0 36px;height:1px;background:var(--orange)}
+  section{position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;padding:clamp(100px,16vh,190px) clamp(16px,4vw,48px)}
+  .sechead{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+  .sechead::before{content:"";flex:0 0 34px;height:1px;background:var(--orange)}
   h2{font-size:clamp(32px,5vw,68px);line-height:1.06;font-weight:700;letter-spacing:-.02em;max-width:16ch}
-  h2 .o{color:var(--orange);text-shadow:0 0 22px rgba(240,137,15,.4)}
+  h2 .o{color:var(--orange);text-shadow:0 0 22px rgba(240,137,15,.35)}
   .p{font-size:clamp(15px,1.3vw,18px);line-height:1.8;color:var(--muted);max-width:44ch}
 
-  /* terminal spec panel */
-  .term{margin-top:8px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--bg2))}
-  .term .bar{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--dim)}
-  .term .bar i{width:9px;height:9px;border-radius:50%;background:var(--line)}
-  .term .bar i:nth-child(1){background:#d23b1a}.term .bar i:nth-child(2){background:var(--orange)}.term .bar i:nth-child(3){background:var(--blue)}
-  .term .bar span{margin-left:auto}
-  .stats{display:grid;grid-template-columns:repeat(3,1fr)}
-  .stat{padding:46px 34px;border-right:1px solid var(--line)}
+  /* spec — open plate, no box chrome */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:6px;
+    border-top:1px solid var(--line)}
+  .stat{padding:50px 30px 10px;border-right:1px solid var(--line)}
   .stat:last-child{border-right:none}
-  .stat .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--dim);margin-bottom:18px}
-  .stat .n{font-family:var(--crt);font-size:clamp(56px,8vw,104px);line-height:.8;color:var(--orange);text-shadow:0 0 18px rgba(240,137,15,.4)}
-  .stat:nth-child(2) .n{color:var(--blue);text-shadow:0 0 18px rgba(95,184,220,.4)}
-  .stat:nth-child(3) .n{color:var(--yellow);text-shadow:0 0 18px rgba(227,194,74,.35)}
-  .stat .n .u{font-family:var(--mono);font-size:.18em;color:var(--muted);margin-left:8px;letter-spacing:.06em;text-shadow:none}
-  .stat .l{margin-top:16px;font-size:13px;color:var(--muted);max-width:24ch}
+  .stat .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--dim);margin-bottom:20px}
+  .stat .n{font-size:clamp(58px,8.4vw,116px);font-weight:700;line-height:.84;letter-spacing:-.04em;color:var(--orange);text-shadow:0 0 24px rgba(240,137,15,.3)}
+  .stat:nth-child(2) .n{color:var(--blue);text-shadow:0 0 24px rgba(95,184,220,.3)}
+  .stat:nth-child(3) .n{color:var(--text);text-shadow:none}
+  .stat .n .u{font-family:var(--mono);font-size:.16em;color:var(--muted);margin-left:8px;letter-spacing:.04em;text-shadow:none}
+  .stat .l{margin-top:18px;font-size:13px;color:var(--muted);max-width:24ch}
 
-  /* field-report cards (asymmetric) */
   .feat{display:grid;grid-template-columns:repeat(12,1fr);gap:22px;margin-top:60px}
-  .fcard{position:relative;border:1px solid var(--line);background:var(--panel);padding:34px 30px;
-    overflow:hidden;will-change:transform;display:flex;flex-direction:column;justify-content:space-between;min-height:280px}
-  .fcard::before{content:"";position:absolute;inset:0;pointer-events:none;
-    background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 4px);opacity:.5}
+  .fcard{position:relative;border:1px solid var(--line);background:var(--panel);padding:34px 30px;overflow:hidden;
+    will-change:transform;display:flex;flex-direction:column;justify-content:space-between;min-height:280px}
   .fcard .fl{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--orange)}
-  .fcard h3{font-size:clamp(20px,2.2vw,28px);font-weight:700;margin:16px 0 12px;letter-spacing:-.01em;position:relative;z-index:2}
-  .fcard p{font-size:14px;line-height:1.7;color:var(--muted);max-width:34ch;position:relative;z-index:2}
-  .fcard.a{grid-column:1 / 7;min-height:420px;background:linear-gradient(180deg,var(--panel2),var(--panel))}
+  .fcard h3{font-size:clamp(20px,2.2vw,28px);font-weight:700;margin:16px 0 12px;letter-spacing:-.01em}
+  .fcard p{font-size:14px;line-height:1.7;color:var(--muted);max-width:34ch}
+  .fcard.a{grid-column:1 / 7;min-height:420px;background:linear-gradient(180deg,#2c241b,var(--panel))}
   .fcard.b{grid-column:7 / 13;align-self:start;margin-top:54px}
   .fcard.c{grid-column:7 / 13}
-  .fcard .ghostnum{position:absolute;right:-6px;bottom:-30px;font-family:var(--crt);font-size:clamp(140px,18vw,240px);line-height:1;color:transparent;-webkit-text-stroke:1px rgba(240,137,15,.14);pointer-events:none}
+  .fcard .ghostnum{position:absolute;right:-4px;bottom:-34px;font-size:clamp(150px,18vw,250px);line-height:1;font-weight:700;
+    color:transparent;-webkit-text-stroke:1px rgba(240,137,15,.13);pointer-events:none}
 
-  /* story */
   .split{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-  .bigword{font-size:clamp(100px,18vw,236px);font-weight:700;line-height:.84;letter-spacing:-.04em;will-change:transform}
+  .bigword{font-size:clamp(100px,18vw,240px);font-weight:700;line-height:.84;letter-spacing:-.04em;will-change:transform}
   .bigword .stroke{-webkit-text-stroke:2px var(--text);color:transparent}
-  .bigword .x{color:var(--orange);font-size:.62em;display:inline-block;text-shadow:0 0 30px rgba(240,137,15,.6)}
+  .bigword .x{color:var(--orange);font-size:.62em;display:inline-block;text-shadow:0 0 34px rgba(240,137,15,.55)}
   .tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
   .tag{font-family:var(--mono);border:1px solid var(--line);padding:9px 15px;font-size:12px;color:var(--muted);
     cursor:pointer;transition:.25s;will-change:transform}
   @media(hover:hover){.tag:hover{border-color:var(--orange);color:var(--orange);transform:translateY(-2px)}}
   .tag.lit{border-color:var(--orange);color:var(--orange)}
 
-  /* assembly line (horizontal pinned) */
   .flow-sec{max-width:none;padding:0;overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
   .flow-pin{position:relative;height:100dvh;display:flex;align-items:center}
   .flow-track{display:flex;align-items:stretch;gap:26px;padding:0 clamp(16px,7vw,140px);will-change:transform}
   .flow-intro{flex:0 0 auto;width:min(80vw,420px);align-self:center}
   .step{flex:0 0 auto;width:min(78vw,340px);border:1px solid var(--line);background:var(--panel);
-    padding:36px 30px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
-  .step::before{content:"";position:absolute;top:0;left:0;right:0;height:6px}
-  .step.hazard::before{background-image:repeating-linear-gradient(-45deg,var(--orange) 0 10px,#0d0b08 10px 20px)}
-  .step .big{font-family:var(--crt);font-size:72px;line-height:.8;color:transparent;-webkit-text-stroke:1px var(--orange)}
+    padding:36px 30px;display:flex;flex-direction:column;justify-content:space-between;position:relative}
+  .step .big{font-size:70px;line-height:.84;font-weight:700;color:transparent;-webkit-text-stroke:1px var(--orange)}
   .step h4{font-size:22px;font-weight:700;margin-bottom:10px;letter-spacing:-.01em}
   .step p{font-size:14px;line-height:1.65;color:var(--muted)}
 
-  /* footer */
-  footer{position:relative;text-align:center;overflow:hidden;background:var(--bg2);border-top:1px solid var(--line);
-    padding:clamp(110px,18vh,200px) 20px calc(54px + env(safe-area-inset-bottom))}
-  footer h2{margin:0 auto;max-width:none;font-size:clamp(44px,9vw,128px);line-height:1.02;letter-spacing:-.03em;padding-bottom:.06em}
-  footer h2 .o{color:var(--orange);text-shadow:0 0 30px rgba(240,137,15,.55)}
+  footer{position:relative;z-index:1;text-align:center;overflow:hidden;background:var(--bg2);border-top:1px solid var(--line);
+    padding:clamp(120px,18vh,210px) 20px calc(54px + env(safe-area-inset-bottom))}
+  footer h2{margin:0 auto;max-width:none;font-size:clamp(46px,9vw,132px);line-height:1.02;letter-spacing:-.03em;padding-bottom:.06em}
+  footer h2 .o{color:var(--orange);text-shadow:0 0 32px rgba(240,137,15,.5)}
   footer .btn{margin-top:48px}
-  .foot-meta{margin-top:64px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--dim);
-    display:flex;gap:24px;justify-content:center;flex-wrap:wrap}
-  .foot-glow{position:absolute;width:70vw;height:50vw;max-width:680px;left:50%;bottom:-20%;transform:translateX(-50%);
-    background:radial-gradient(circle,rgba(240,137,15,.16),transparent 62%);pointer-events:none}
+  .foot-meta{margin-top:64px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--dim);display:flex;gap:24px;justify-content:center;flex-wrap:wrap}
+  .foot-glow{position:absolute;width:80vw;height:50vw;max-width:720px;left:50%;bottom:-22%;transform:translateX(-50%);
+    background:radial-gradient(circle,rgba(240,137,15,.18),transparent 62%);pointer-events:none}
 
-  .rev{opacity:0}
-  .ready .rev{opacity:1}
+  .rev{opacity:0}.ready .rev{opacity:1}
 
   @media(prefers-reduced-motion:reduce){
     *{animation:none!important;transition-duration:.001s!important}
     .rev{opacity:1!important;transform:none!important}
-    .sweep{display:none}.fx.flick{display:none}
   }
 
-  /* ===== mobile ===== */
   @media(max-width:900px){
-    .hero{grid-template-columns:1fr;text-align:center;min-height:auto;padding:96px clamp(16px,5vw,32px) 50px;gap:30px}
-    .hero-copy{order:2}.stage{order:1}.chamber{width:min(80vw,400px)}
-    .sys{justify-content:center}
-    h1{font-size:clamp(46px,13vw,76px);line-height:1.06}
-    .cta{justify-content:center}.lead{margin-left:auto;margin-right:auto}
+    .hero{padding:96px clamp(16px,5vw,28px) 54px;min-height:auto}
+    .stage{width:min(86vw,400px)}
+    h1{font-size:clamp(48px,15vw,84px)}
     .navlinks{display:none}
     .nav-cta{display:inline-flex;font-family:var(--mono);font-size:11px;border:1.5px solid var(--orange);color:var(--orange);padding:8px 14px}
-    section{padding:clamp(72px,11vh,110px) clamp(16px,5vw,32px)}
-    .stats{grid-template-columns:1fr}
-    .stat{border-right:none;border-bottom:1px solid var(--line);padding:34px 24px}
+    section{padding:clamp(74px,11vh,110px) clamp(16px,5vw,28px)}
+    .stats{grid-template-columns:1fr;border-top:none}
+    .stat{border-right:none;border-bottom:1px solid var(--line);padding:34px 4px 30px}
     .stat:last-child{border-bottom:none}
     .feat{display:flex;flex-direction:column;gap:16px;margin-top:40px}
     .fcard.a,.fcard.b,.fcard.c{margin-top:0;min-height:0}
     .split{grid-template-columns:1fr;gap:34px;text-align:center}
-    .bigword{font-size:clamp(120px,36vw,200px)}
-    .flow-sec{max-width:var(--maxw);margin:0 auto;border:none;padding:clamp(72px,11vh,110px) clamp(16px,5vw,32px)}
+    .bigword{font-size:clamp(120px,38vw,200px)}
+    .flow-sec{max-width:var(--maxw);margin:0 auto;border:none;padding:clamp(74px,11vh,110px) clamp(16px,5vw,28px)}
     .flow-pin{height:auto;display:block}
     .flow-track{flex-direction:column;gap:16px;padding:0;transform:none!important}
     .flow-intro,.step{width:auto;text-align:center}
@@ -230,87 +193,72 @@
 </head>
 <body>
 
-<div class="fx scan"></div>
-<div class="fx flick"></div>
-<div class="fx grain"></div>
-<div class="fx vig"></div>
+<div class="grain"></div>
+<div class="scan"></div>
 <div class="progress" id="progress"></div>
 
 <nav id="nav">
-  <a href="#top" class="brand"><img src="assets/wordmark.png" alt="nekoSHARK"><span class="tag">ARCHIVE</span></a>
+  <a href="#top" class="brand"><img src="assets/wordmark.png" alt="nekoSHARK"><span class="tag">ART FIGURES</span></a>
   <div class="navlinks">
-    <a href="#figures">标本</a><a href="#story">故事</a><a href="#flow">装配</a><a href="#join">预约</a>
+    <a href="#figures">人偶</a><a href="#story">故事</a><a href="#flow">工艺</a><a href="#join">预约</a>
   </div>
   <a href="#join" class="nav-cta">预约首发</a>
 </nav>
 
 <header class="hero" id="top">
-  <div class="hero-copy">
-    <div class="sys rev"><span class="dotled"></span><span class="label">nekoSHARK 档案库 // 标本 No.001</span></div>
-    <h1>
-      <span class="ln"><i class="rev">会<span class="o">动</span>的</i></span>
-      <span class="ln"><i class="rev stroke">猫鲨</i></span>
-    </h1>
-    <p class="lead rev">一只赖在鲨鱼鳍上的猫,被收容在档案库的亮舱里。可动关节,做旧涂装,<b>收藏级硬核手感</b>。</p>
-    <div class="cta rev">
-      <a href="#figures" class="btn magnetic"><span class="fill"></span><span class="lbl">▶ 查看标本</span></a>
-      <a href="#story" class="btn alt magnetic"><span class="fill"></span><span class="lbl">它的故事</span></a>
+  <span class="eyebrow rev">Articulated Art Figures</span>
+  <div class="stage" id="stage">
+    <div class="beam"></div>
+    <div class="pool"></div>
+    <div class="floor"></div>
+    <div class="mascot" id="mascot">
+      <div class="mascot-in" id="mascotIn">
+        <img class="m-color" src="assets/mascot_color.png" alt="">
+        <img class="m-line"  src="assets/mascot_line.png" alt="nekoSHARK 吉祥物:赖在鲨鱼鳍上的橘猫">
+      </div>
     </div>
   </div>
-
-  <div class="stage">
-    <div class="chamber rev">
-      <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
-      <div class="clabel">CONTAINMENT // 会动的猫鲨</div>
-      <div class="sweep"></div>
-      <div class="mascot" id="mascot">
-        <div class="mascot-in" id="mascotIn">
-          <img class="m-color" src="assets/mascot_color.png" alt="">
-          <img class="m-line"  src="assets/mascot_line.png" alt="nekoSHARK 吉祥物:赖在鲨鱼鳍上的橘猫">
-        </div>
-      </div>
-      <div class="rec"><b></b>SCANNING · 划过激活</div>
-    </div>
+  <span class="scanhint rev">划过 / 触摸 · 点亮它</span>
+  <h1>会<span class="o">动</span>的<span class="stroke">猫鲨</span></h1>
+  <p class="lead rev">一只赖在鲨鱼鳍上的猫,被一束光打在台上。可动关节,做旧涂装,<b>收藏级硬核手感</b>。</p>
+  <div class="cta rev">
+    <a href="#figures" class="btn magnetic"><span class="fill"></span><span class="lbl">▶ 看看人偶</span></a>
+    <a href="#story" class="btn alt magnetic"><span class="fill"></span><span class="lbl">它的故事</span></a>
   </div>
 </header>
 
 <div class="marquee" aria-hidden="true">
   <div class="track" id="track">
-    <span><span class="tri">▲</span>CAUTION<span class="tri">▲</span>neko<b class="o">SHARK</b><span class="tri">▲</span>可动人偶<span class="tri">▲</span>做旧机能<span class="tri">▲</span>收藏级<span class="tri">▲</span>SPECIMEN ACTIVE<span class="tri">▲</span></span>
-    <span><span class="tri">▲</span>CAUTION<span class="tri">▲</span>neko<b class="o">SHARK</b><span class="tri">▲</span>可动人偶<span class="tri">▲</span>做旧机能<span class="tri">▲</span>收藏级<span class="tri">▲</span>SPECIMEN ACTIVE<span class="tri">▲</span></span>
+    <span>neko<b class="o">SHARK</b><span class="tri">/</span>可动人偶<span class="tri">/</span>做旧机能<span class="tri">/</span>收藏级<span class="tri">/</span>机能美学<span class="tri">/</span></span>
+    <span>neko<b class="o">SHARK</b><span class="tri">/</span>可动人偶<span class="tri">/</span>做旧机能<span class="tri">/</span>收藏级<span class="tri">/</span>机能美学<span class="tri">/</span></span>
   </div>
 </div>
 
 <section id="numbers">
-  <div class="sechead rev"><span class="label">规格档案 // SPEC.SYS</span></div>
-  <div class="term rev">
-    <div class="bar"><i></i><i></i><i></i><span>specimen_001.dat</span></div>
-    <div class="stats">
-      <div class="stat"><div class="k">// JOINTS</div><div class="n" data-count="20"><span class="v">0</span><span class="u">关节点</span></div><div class="l">从冲浪到摊平,随手成姿</div></div>
-      <div class="stat"><div class="k">// HEIGHT</div><div class="n" data-count="28"><span class="v">0</span><span class="u">cm 身高</span></div><div class="l">桌面陈列刚刚好的存在感</div></div>
-      <div class="stat"><div class="k">// LIMITED</div><div class="n" data-count="999"><span class="v">0</span><span class="u">限量</span></div><div class="l">全球编号,售完即绝</div></div>
-    </div>
+  <div class="sechead rev"><span class="label">规格 // SPEC</span></div>
+  <div class="stats">
+    <div class="stat rev"><div class="k">// JOINTS</div><div class="n" data-count="20"><span class="v">0</span><span class="u">关节点</span></div><div class="l">从冲浪到摊平,随手成姿</div></div>
+    <div class="stat rev"><div class="k">// HEIGHT</div><div class="n" data-count="28"><span class="v">0</span><span class="u">cm 身高</span></div><div class="l">桌面陈列刚刚好的存在感</div></div>
+    <div class="stat rev"><div class="k">// LIMITED</div><div class="n" data-count="999"><span class="v">0</span><span class="u">限量</span></div><div class="l">全球编号,售完即绝</div></div>
   </div>
 </section>
 
 <section id="figures">
-  <div class="sechead rev"><span class="label">现场报告 // FIELD REPORT</span></div>
+  <div class="sechead rev"><span class="label">作品 // THE LINE</span></div>
   <h2 class="rev">不是摆件,是<span class="o">能摆姿势</span>的伙伴。</h2>
   <div class="feat">
     <article class="fcard a rev">
-      <div class="fl">FILE_01 // 做旧涂装</div>
-      <div>
-        <h3>每一只,都磨出自己的故事。</h3>
-        <p>层层喷涂、打磨、做旧的机能涂装,边角的磨损不是瑕疵,是它走过的路。没有两只完全一样。</p>
-      </div>
+      <div class="fl">01 // 做旧涂装</div>
+      <div><h3>每一只,都磨出自己的故事。</h3>
+      <p>层层喷涂、打磨、做旧的机能涂装,边角的磨损不是瑕疵,是它走过的路。没有两只完全一样。</p></div>
       <span class="ghostnum">01</span>
     </article>
     <article class="fcard b rev">
-      <div class="fl">FILE_02 // 多点关节</div>
+      <div class="fl">02 // 多点关节</div>
       <div><h3>多点关节</h3><p>头、双臂、鳍尾全可动。从冲浪到摊平,随手一摆都是表情包。</p></div>
     </article>
     <article class="fcard c rev">
-      <div class="fl">FILE_03 // 收藏规格</div>
+      <div class="fl">03 // 收藏规格</div>
       <div><h3>收藏规格</h3><p>限量编号、独立配件、磁吸底座。开箱即陈列,把玩也不掉漆。</p></div>
     </article>
   </div>
@@ -320,8 +268,8 @@
   <div class="split">
     <div class="bigword rev" data-par="-5"><span class="stroke">猫</span><span class="x">×</span>鲨</div>
     <div>
-      <div class="sechead rev"><span class="label">起源 // WHY A CAT ON A SHARK</span></div>
-      <p class="p rev">猫的慵懒,鲨的锋利,两种气质捏进同一只生物。暗室里的一束光,黑线骨架,只在被扫描时露出那一抹橙与蓝。这就是 nekoSHARK 全部的矛盾,也是它全部的魅力。</p>
+      <div class="sechead rev"><span class="label">起源 // CAT × SHARK</span></div>
+      <p class="p rev">猫的慵懒,鲨的锋利,两种气质捏进同一只生物。暗台上的一束光,黑线骨架,只在被点亮时露出那一抹橙与蓝。这就是 nekoSHARK 全部的矛盾,也是它全部的魅力。</p>
       <div class="tags rev">
         <span class="tag">暖白 × 黑线</span><span class="tag">做旧涂装</span><span class="tag">机能美学</span>
         <span class="tag">限量编号</span><span class="tag">硬核可动</span>
@@ -334,24 +282,24 @@
   <div class="flow-pin" id="flowPin">
     <div class="flow-track" id="flowTrack">
       <div class="flow-intro">
-        <div class="sechead"><span class="label">装配流程 // ASSEMBLY LINE</span></div>
+        <div class="sechead"><span class="label">工艺 // SKETCH TO JOINT</span></div>
         <h2>一只 IP,<span class="o">从头到尾</span>自己来。</h2>
       </div>
-      <div class="step hazard"><div class="big">01</div><div><h4>手绘设定</h4><p>从一张草图开始,把猫与鲨的矛盾感定下来。</p></div></div>
-      <div class="step hazard"><div class="big">02</div><div><h4>原型雕刻</h4><p>数字雕刻加拆件,把每一个可动关节算到位。</p></div></div>
-      <div class="step hazard"><div class="big">03</div><div><h4>做旧涂装</h4><p>层层喷涂、打磨、做旧,赋予它岁月与故事。</p></div></div>
-      <div class="step hazard"><div class="big">04</div><div><h4>装配出货</h4><p>编号、配件、磁吸底座装箱,送到你手上。</p></div></div>
+      <div class="step"><div class="big">01</div><div><h4>手绘设定</h4><p>从一张草图开始,把猫与鲨的矛盾感定下来。</p></div></div>
+      <div class="step"><div class="big">02</div><div><h4>原型雕刻</h4><p>数字雕刻加拆件,把每一个可动关节算到位。</p></div></div>
+      <div class="step"><div class="big">03</div><div><h4>做旧涂装</h4><p>层层喷涂、打磨、做旧,赋予它岁月与故事。</p></div></div>
+      <div class="step"><div class="big">04</div><div><h4>装配出货</h4><p>编号、配件、磁吸底座装箱,送到你手上。</p></div></div>
     </div>
   </div>
 </section>
 
 <footer id="join">
   <div class="foot-glow"></div>
-  <div class="sechead rev" style="justify-content:center"><span class="label">// ACCESS REQUEST</span></div>
+  <div class="sechead rev" style="justify-content:center"><span class="label">// 预约首发</span></div>
   <h2 class="rev">来摸摸这只<br><span class="o">猫鲨</span>。</h2>
   <a href="#" class="btn magnetic rev"><span class="fill"></span><span class="lbl">▶ 预约首发</span></a>
   <div class="foot-meta">
-    <span>© 2026 nekoSHARK</span><span>ARTICULATED ART FIGURES</span><span>// END OF FILE</span>
+    <span>© 2026 nekoSHARK</span><span>ARTICULATED ART FIGURES</span>
   </div>
 </footer>
 
@@ -365,10 +313,11 @@
   const hasGSAP = typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined';
   document.documentElement.classList.add('ready');
 
+  const stage=document.getElementById('stage');
   const mascot=document.getElementById('mascot');
   const mascotIn=document.getElementById('mascotIn');
   const color=document.querySelector('.m-color');
-  let pointing=false, locked=false;
+  let locked=false;
   function setR(v){ color.style.setProperty('--r',v); }
   function paintAt(cx,cy,r){ if(locked)return;
     const b=mascot.getBoundingClientRect();
@@ -378,8 +327,7 @@
     [{transform:'scale(1) rotate(0)'},{transform:'scale(.93) rotate(-2deg)'},
      {transform:'scale(1.05) rotate(1.5deg)'},{transform:'scale(1) rotate(0)'}],
     {duration:480,easing:'cubic-bezier(.2,.8,.2,1)'}); }
-  const meowSrcs=['assets/meow1.mp3','assets/meow2.mp3','assets/meow3.mp3'];
-  const meows=meowSrcs.map(s=>{const a=new Audio(s);a.preload='auto';a.volume=.85;return a;});
+  const meows=['assets/meow1.mp3','assets/meow2.mp3','assets/meow3.mp3'].map(s=>{const a=new Audio(s);a.preload='auto';a.volume=.85;return a;});
   let lastIdx=-1;
   function meow(){ let i; do{i=Math.floor(Math.random()*meows.length);}while(meows.length>1&&i===lastIdx);
     lastIdx=i; const a=meows[i]; try{a.currentTime=0;const p=a.play();if(p&&p.catch)p.catch(()=>{});}catch(e){} }
@@ -388,13 +336,12 @@
       color.style.setProperty('--mx',((cx-b.left)/b.width*100)+'%');
       color.style.setProperty('--my',((cy-b.top)/b.height*100)+'%');}
     setR('235%'); locked=true; }
-  const stage=document.querySelector('.chamber');
   if(!isTouch){
     stage.addEventListener('mousemove',e=>{const b=mascot.getBoundingClientRect();
-      const px=(e.clientX-b.left)/b.width, py=(e.clientY-b.top)/b.height; pointing=true;
+      const px=(e.clientX-b.left)/b.width, py=(e.clientY-b.top)/b.height;
       mascotIn.style.transform=`rotateY(${(px-.5)*12}deg) rotateX(${(.5-py)*12}deg)`;
       paintAt(e.clientX,e.clientY,'48%');});
-    stage.addEventListener('mouseleave',()=>{pointing=false; if(!locked){setR('0px');} mascotIn.style.transform='';});
+    stage.addEventListener('mouseleave',()=>{ if(!locked){setR('0px');} mascotIn.style.transform='';});
     stage.addEventListener('click',e=>lock(e.clientX,e.clientY));
   } else {
     let t=null;
@@ -432,21 +379,19 @@
 
   if(!isTouch){
     document.querySelectorAll('.magnetic').forEach(el=>{
-      const xT=gsap.quickTo(el,'x',{duration:.5,ease:'power3'});
-      const yT=gsap.quickTo(el,'y',{duration:.5,ease:'power3'});
+      const xT=gsap.quickTo(el,'x',{duration:.5,ease:'power3'}), yT=gsap.quickTo(el,'y',{duration:.5,ease:'power3'});
       el.addEventListener('mousemove',e=>{const r=el.getBoundingClientRect();
         xT((e.clientX-(r.left+r.width/2))*.4); yT((e.clientY-(r.top+r.height/2))*.5);});
       el.addEventListener('mouseleave',()=>{xT(0);yT(0);});
     });
   }
 
-  gsap.set('h1 .ln i',{yPercent:115});
-  gsap.timeline({delay:.12})
-    .to('h1 .ln i',{yPercent:0,duration:1.1,ease:'power4.out',stagger:.12})
-    .from('.hero .sys',{opacity:0,y:16,duration:.7,ease:'power3'},'-=.9')
-    .from('.hero .lead',{opacity:0,y:22,duration:.7,ease:'power3'},'-=.6')
-    .from('.hero .cta',{opacity:0,y:22,duration:.7,ease:'power3'},'-=.5')
-    .from('.chamber',{opacity:0,scale:.94,duration:1.1,ease:'power3'},'-=1');
+  gsap.from('.hero .eyebrow',{opacity:0,y:14,duration:.8,delay:.1,ease:'power3'});
+  gsap.from('.stage',{opacity:0,scale:.9,duration:1.3,delay:.15,ease:'power3'});
+  gsap.from('h1',{opacity:0,y:30,duration:1,delay:.4,ease:'power4.out'});
+  gsap.from('.hero .scanhint',{opacity:0,duration:.8,delay:.8,ease:'power2'});
+  gsap.from('.hero .lead',{opacity:0,y:20,duration:.8,delay:.6,ease:'power3'});
+  gsap.from('.hero .cta',{opacity:0,y:20,duration:.8,delay:.75,ease:'power3'});
 
   gsap.utils.toArray('.rev').forEach(el=>{ if(el.closest('.hero'))return;
     gsap.from(el,{opacity:0,y:38,duration:.9,ease:'power3',scrollTrigger:{trigger:el,start:'top 88%'}}); });
