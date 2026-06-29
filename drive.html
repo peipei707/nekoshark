@@ -119,6 +119,19 @@
   const spray=new THREE.Points(sprayGeo,new THREE.PointsMaterial({color:0xffffff,size:0.5,transparent:true,opacity:.9,depthWrite:false}));
   scene.add(spray);
 
+  // ===== pixel fish that breach the waves =====
+  function fishTex(body){var c=document.createElement('canvas');c.width=20;c.height=12;var x=c.getContext('2d');
+    x.fillStyle=body; x.fillRect(4,4,11,5); x.fillRect(0,3,4,2); x.fillRect(0,7,4,2); x.fillRect(1,5,2,2);
+    x.fillStyle='#0e2230'; x.fillRect(12,5,1,1);
+    var tx=new THREE.CanvasTexture(c); tx.magFilter=THREE.NearestFilter; tx.minFilter=THREE.NearestFilter; return tx;}
+  const fishCols=['#F2901C','#7FC9EC','#F4EEE2','#ffd29a'];
+  const fishes=[];
+  for(let fi=0;fi<9;fi++){
+    const fspr=new THREE.Sprite(new THREE.SpriteMaterial({map:fishTex(fishCols[fi%4]),transparent:true}));
+    fspr.scale.set(1.9,1.15,1); fspr.position.set(0,-99,0); scene.add(fspr);
+    fishes.push({spr:fspr,active:false,wait:Math.random()*3.5,vx:0,vy:0,vz:0});
+  }
+
   // ===== buoys (link back to site) =====
   function sign(label){const cv=document.createElement('canvas');cv.width=512;cv.height=256;const x=cv.getContext('2d');
     x.fillStyle='#F4EEE2';x.fillRect(0,0,512,256);x.strokeStyle='#17130E';x.lineWidth=14;x.strokeRect(7,7,498,242);
@@ -192,6 +205,22 @@
       apos.setXYZ(i, p.life>0?p.x:0, p.life>0?p.y:-99, p.life>0?p.z:0);
     }
     apos.needsUpdate=true;
+
+    // pixel fish leaping out of the waves
+    fishes.forEach(function(f){
+      if(!f.active){ f.wait-=0.016; if(f.wait<=0){
+          const ang=Math.random()*6.283, dist=9+Math.random()*24;
+          const fxp=cx+Math.sin(ang)*dist, fzp=cz+Math.cos(ang)*dist;
+          f.spr.position.set(fxp, waveH(fxp,fzp,t)-0.4, fzp);
+          const dir=Math.random()*6.283, hs=0.06+Math.random()*0.08;
+          f.vx=Math.cos(dir)*hs; f.vz=Math.sin(dir)*hs; f.vy=0.3+Math.random()*0.18; f.active=true;
+        } return; }
+      f.vy-=0.018; f.spr.position.x+=f.vx; f.spr.position.y+=f.vy; f.spr.position.z+=f.vz;
+      f.spr.material.rotation=Math.atan2(f.vy,Math.max(0.05,Math.hypot(f.vx,f.vz)));
+      if(f.vy<0 && f.spr.position.y < waveH(f.spr.position.x,f.spr.position.z,t)-0.4){
+        f.spr.position.set(0,-99,0); f.active=false; f.wait=0.5+Math.random()*3.5;
+      }
+    });
 
     // buoys bob + billboard + proximity
     nearBuoy=null;
