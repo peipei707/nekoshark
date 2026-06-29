@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>nekoSHARK · 破浪</title>
+<meta name="description" content="一只猫鲨,劈开大海破浪前进。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:#7FC9EC;font-family:"Space Grotesk",sans-serif;color:#0e2230}
+  #c{position:fixed;inset:0;display:block}
+  .ui{position:fixed;z-index:10;pointer-events:none}
+  .top{top:max(16px,env(safe-area-inset-top));left:18px;right:18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .badge{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.14em;background:rgba(14,34,48,.8);color:#F4EEE2;padding:8px 12px;border-radius:8px}
+  .badge b{color:#F2901C}
+  .help{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.05em;text-align:right;color:#0e2230;line-height:1.7;text-shadow:0 1px 2px rgba(255,255,255,.5)}
+  .back{pointer-events:auto;font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.1em;
+    background:#F2901C;color:#17130E;border:2px solid #17130E;box-shadow:3px 3px 0 #17130E;padding:8px 12px;border-radius:6px}
+  .prompt{left:50%;bottom:calc(120px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    font-family:"Space Mono",monospace;font-size:14px;background:rgba(14,34,48,.9);color:#F4EEE2;padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s}
+  .prompt.on{opacity:1}.prompt b{color:#F2901C}
+  .pad{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));z-index:11;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;display:none}
+  .pad.l{left:20px}.pad.r{right:20px;display:flex;gap:12px}
+  .key{width:60px;height:60px;border-radius:14px;border:2px solid #17130E;background:rgba(244,238,226,.92);
+    box-shadow:3px 3px 0 #17130E;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#17130E}
+  .key:active{transform:translate(3px,3px);box-shadow:0 0 0;background:#F2901C}
+  @media (hover:none){.pad{display:flex}.help{display:none}}
+  .load{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:#7FC9EC;
+    font-family:"Space Mono",monospace;font-size:13px;letter-spacing:.18em;color:#0e2230}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui top">
+  <span class="badge">neko<b>SHARK</b> · 破浪</span>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+    <a class="back" href="index.html">← 回主站</a>
+    <div class="help">← → 转向 · ↑ 加速 · ↓ 减速<br>靠近浮标按 ENTER 进入</div>
+  </div>
+</div>
+<div class="ui prompt" id="prompt">靠近了 <b id="promptName"></b> · 按 ENTER 进入</div>
+<div class="pad l"><div class="key" id="kL">◀</div></div>
+<div class="pad r"><div class="key" id="kU">▲</div><div class="key" id="kR">▶</div></div>
+<div class="load" id="load">起航中…  LOADING</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  if(typeof THREE==='undefined'){document.getElementById('load').textContent='Three.js 加载失败,请检查网络';return;}
+  const INK=0x14110c, ORANGE=0xF2901C, SKY=0x7FC9EC, NAVY=0x232844, CREAM=0xF4EEE2;
+
+  const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+
+  const scene=new THREE.Scene();
+  scene.background=new THREE.Color(SKY);
+  scene.fog=new THREE.Fog(0x9ad5f0,70,180);
+
+  const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,0.1,500);
+
+  scene.add(new THREE.HemisphereLight(0xdff3ff,0x1d4a63,0.9));
+  const sun=new THREE.DirectionalLight(0xfff3df,1.15);
+  sun.position.set(-30,50,-10); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+  const sc=sun.shadow.camera; sc.left=sc.bottom=-60; sc.right=sc.top=60; sc.near=1; sc.far=160; scene.add(sun);
+  // sun disc in the sky
+  const sunDisc=new THREE.Mesh(new THREE.CircleGeometry(14,40),new THREE.MeshBasicMaterial({color:0xffe7b0}));
+  sunDisc.position.set(-70,46,-130); scene.add(sunDisc);
+
+  // ===== ocean (animated low-poly) =====
+  const SEG=120, SIZE=360;
+  const oceanGeo=new THREE.PlaneGeometry(SIZE,SIZE,SEG,SEG);
+  oceanGeo.rotateX(-Math.PI/2);
+  const oceanMat=new THREE.MeshStandardMaterial({color:0x1f6f93,roughness:.55,metalness:.15,flatShading:true});
+  const ocean=new THREE.Mesh(oceanGeo,oceanMat); ocean.receiveShadow=true; scene.add(ocean);
+  const pos=oceanGeo.attributes.position;
+  const baseXZ=[]; for(let i=0;i<pos.count;i++){ baseXZ.push(pos.getX(i),pos.getZ(i)); }
+  function waveH(x,z,t){
+    return Math.sin(x*0.16 + t*1.1)*0.85
+         + Math.sin(z*0.21 + t*0.95)*0.62
+         + Math.sin((x+z)*0.11 + t*1.5)*0.5
+         + Math.sin((x-z)*0.27 + t*1.8)*0.22;
+  }
+
+  // ===== shark fin + cat =====
+  const creature=new THREE.Group(); scene.add(creature);
+  const fs=new THREE.Shape();
+  fs.moveTo(-1.5,0); fs.lineTo(1.1,0);
+  fs.quadraticCurveTo(1.0,1.7,0.05,2.8);
+  fs.quadraticCurveTo(-0.95,1.5,-1.5,0);
+  const finGeo=new THREE.ExtrudeGeometry(fs,{depth:0.4,bevelEnabled:false});
+  finGeo.center(); finGeo.rotateY(Math.PI/2);
+  const fin=new THREE.Mesh(finGeo,new THREE.MeshStandardMaterial({color:INK,roughness:.5}));
+  fin.position.y=1.3; fin.castShadow=true; creature.add(fin);
+  // orange trailing edge accent
+  const edge=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.16,2.4),new THREE.MeshStandardMaterial({color:ORANGE}));
+  edge.position.set(0,1.5,-0.2); edge.rotation.x=-0.5; creature.add(edge);
+  // cat billboard riding the fin
+  let cat=null;
+  new THREE.TextureLoader().load('assets/mascot_color.png',function(tex){
+    cat=new THREE.Mesh(new THREE.PlaneGeometry(5.2,5.65),new THREE.MeshBasicMaterial({map:tex,transparent:true}));
+    cat.position.set(0,3.4,-0.2); creature.add(cat);
+  });
+  // wake: foam trail behind + foam ring at base
+  const wakeMat=new THREE.MeshBasicMaterial({color:CREAM,transparent:true,opacity:.32,depthWrite:false});
+  const wake=new THREE.Mesh(new THREE.PlaneGeometry(3.4,16),wakeMat);
+  wake.rotation.x=-Math.PI/2; scene.add(wake);
+  const ringMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.5,depthWrite:false});
+  const ring=new THREE.Mesh(new THREE.RingGeometry(0.7,1.7,24),ringMat);
+  ring.rotation.x=-Math.PI/2; scene.add(ring);
+  // spray particles
+  const SPN=90; const sprayGeo=new THREE.BufferGeometry();
+  const sp=new Float32Array(SPN*3), spv=[];
+  for(let i=0;i<SPN;i++){ sp[i*3]=0;sp[i*3+1]=-99;sp[i*3+2]=0; spv.push({life:0}); }
+  sprayGeo.setAttribute('position',new THREE.BufferAttribute(sp,3));
+  const spray=new THREE.Points(sprayGeo,new THREE.PointsMaterial({color:0xffffff,size:0.5,transparent:true,opacity:.9,depthWrite:false}));
+  scene.add(spray);
+
+  // ===== buoys (link back to site) =====
+  function sign(label){const cv=document.createElement('canvas');cv.width=512;cv.height=256;const x=cv.getContext('2d');
+    x.fillStyle='#F4EEE2';x.fillRect(0,0,512,256);x.strokeStyle='#17130E';x.lineWidth=14;x.strokeRect(7,7,498,242);
+    x.fillStyle='#17130E';x.textAlign='center';x.textBaseline='middle';x.font='bold 120px "Space Grotesk",sans-serif';x.fillText(label,256,140);
+    return new THREE.CanvasTexture(cv);}
+  const BUOYS=[{label:'人偶',href:'index.html#figures',x:-30,z:-26},{label:'故事',href:'index.html#story',x:34,z:-30},
+    {label:'工艺',href:'index.html#flow',x:-40,z:18},{label:'预约',href:'index.html#join',x:30,z:26}];
+  const buoyG=[];
+  BUOYS.forEach(b=>{const g=new THREE.Group();
+    const float=new THREE.Mesh(new THREE.SphereGeometry(1.1,16,12),new THREE.MeshStandardMaterial({color:ORANGE,roughness:.6}));
+    float.castShadow=true;
+    const mast=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,4),new THREE.MeshStandardMaterial({color:INK}));
+    mast.position.y=2.4;
+    const panel=new THREE.Mesh(new THREE.PlaneGeometry(4,2),new THREE.MeshBasicMaterial({map:sign(b.label),side:THREE.DoubleSide}));
+    panel.position.y=4.6;
+    g.add(float);g.add(mast);g.add(panel); g.position.set(b.x,0,b.z); g.userData=b; g.userData.panel=panel; scene.add(g); buoyG.push(g);});
+
+  // ===== controls =====
+  const keys={}; const map={ArrowUp:'f',KeyW:'f',ArrowDown:'b',KeyS:'b',ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r'};
+  let nearBuoy=null;
+  addEventListener('keydown',e=>{ if(map[e.code]){keys[map[e.code]]=true; if(e.code.indexOf('Arrow')===0)e.preventDefault();}
+    if(e.code==='Enter'&&nearBuoy)location.href=nearBuoy.userData.href; });
+  addEventListener('keyup',e=>{ if(map[e.code])keys[map[e.code]]=false; });
+  function touch(id,k){const el=document.getElementById(id);const on=e=>{e.preventDefault();keys[k]=true;},off=e=>{e.preventDefault();keys[k]=false;};
+    el.addEventListener('touchstart',on,{passive:false});el.addEventListener('touchend',off);el.addEventListener('touchcancel',off);
+    el.addEventListener('mousedown',on);el.addEventListener('mouseup',off);el.addEventListener('mouseleave',off);}
+  touch('kU','f');touch('kL','l');touch('kR','r');
+
+  let speed=0.34, angle=0; const CRUISE=0.34, BOOST=0.62, SLOW=0.12, TURN=0.034;
+  const camPos=new THREE.Vector3(0,9,18), tmp=new THREE.Vector3();
+  addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  document.getElementById('load').style.display='none';
+
+  const prompt=document.getElementById('prompt'), promptName=document.getElementById('promptName');
+  const clock=new THREE.Clock();
+
+  function frame(){
+    const t=clock.getElapsedTime();
+    // ocean waves
+    for(let i=0;i<pos.count;i++){ pos.setY(i, waveH(baseXZ[i*2],baseXZ[i*2+1],t)); }
+    pos.needsUpdate=true; oceanGeo.computeVertexNormals();
+
+    // steering + cruise
+    const target = keys.f?BOOST : keys.b?SLOW : CRUISE;
+    speed += (target-speed)*0.04;
+    const steer=(keys.l?1:0)-(keys.r?1:0);
+    angle += steer*TURN;
+    const fx=Math.sin(angle), fz=Math.cos(angle);
+    creature.position.x += fx*speed; creature.position.z += fz*speed;
+    const r=Math.hypot(creature.position.x,creature.position.z); if(r>120){creature.position.x*=120/r;creature.position.z*=120/r;}
+    // ride the waves: height + bob + slight roll from wave slope
+    const cx=creature.position.x, cz=creature.position.z;
+    const hC=waveH(cx,cz,t), hF=waveH(cx+fx,cz+fz,t);
+    creature.position.y=hC;
+    creature.rotation.y=angle;
+    creature.rotation.x=(hF-hC)*0.5;
+    creature.rotation.z=Math.sin(t*1.3)*0.04;
+
+    // wake follows behind
+    wake.position.set(cx-fx*8, hC+0.06, cz-fz*8); wake.rotation.z=0; wake.rotation.y=angle;
+    ring.position.set(cx, hC+0.05, cz); const rp=1+Math.sin(t*5)*0.12; ring.scale.set(rp,rp,rp);
+
+    // spray at the fin tip
+    const apos=sprayGeo.attributes.position;
+    for(let i=0;i<SPN;i++){ const p=spv[i];
+      if(p.life<=0){ if(speed>0.2 && Math.random()<0.5){ p.life=0.6+Math.random()*0.4;
+          p.x=cx+(Math.random()-.5)*1.4; p.y=hC+0.6; p.z=cz+(Math.random()-.5)*1.4;
+          p.vx=fx*0.2+(Math.random()-.5)*0.18; p.vy=0.18+Math.random()*0.16; p.vz=fz*0.2+(Math.random()-.5)*0.18;
+        } else { apos.setXYZ(i,0,-99,0); continue; } }
+      p.life-=0.016; p.vy-=0.018; p.x+=p.vx; p.y+=p.vy; p.z+=p.vz;
+      apos.setXYZ(i, p.life>0?p.x:0, p.life>0?p.y:-99, p.life>0?p.z:0);
+    }
+    apos.needsUpdate=true;
+
+    // buoys bob + billboard + proximity
+    nearBuoy=null;
+    buoyG.forEach(g=>{ g.position.y=waveH(g.position.x,g.position.z,t);
+      g.userData.panel.lookAt(camera.position.x,g.userData.panel.getWorldPosition(tmp).y,camera.position.z);
+      const d=Math.hypot(g.position.x-cx,g.position.z-cz); if(d<7&&(!nearBuoy||d<nearBuoy._d)){nearBuoy=g;nearBuoy._d=d;} });
+    if(nearBuoy){promptName.textContent=nearBuoy.userData.label;prompt.classList.add('on');}else prompt.classList.remove('on');
+
+    // cat billboard faces camera (upright)
+    if(cat) cat.lookAt(camera.position.x, cat.getWorldPosition(tmp).y, camera.position.z);
+
+    // chase camera (also rides waves a touch)
+    tmp.set(cx - fx*16, hC+8.5, cz - fz*16);
+    camPos.lerp(tmp,0.06); camera.position.copy(camPos);
+    camera.lookAt(cx, hC+2.2, cz);
+
+    renderer.render(scene,camera);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
