@@ -46,6 +46,8 @@
 <div class="load" id="load">起航中…  LOADING</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fflate@0.7.4/umd/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
 <script>
 (function(){
   "use strict";
@@ -85,25 +87,28 @@
          + Math.sin((x-z)*0.27 + t*1.8)*0.22;
   }
 
-  // ===== shark fin + cat =====
+  // ===== the surfer: the 3D logo itself rides the waves =====
   const creature=new THREE.Group(); scene.add(creature);
-  const fs=new THREE.Shape();
-  fs.moveTo(-1.5,0); fs.lineTo(1.1,0);
-  fs.quadraticCurveTo(1.0,1.7,0.05,2.8);
-  fs.quadraticCurveTo(-0.95,1.5,-1.5,0);
-  const finGeo=new THREE.ExtrudeGeometry(fs,{depth:0.4,bevelEnabled:false});
-  finGeo.center(); finGeo.rotateY(Math.PI/2);
-  const fin=new THREE.Mesh(finGeo,new THREE.MeshStandardMaterial({color:INK,roughness:.5}));
-  fin.position.y=1.3; fin.castShadow=true; creature.add(fin);
-  // orange trailing edge accent
-  const edge=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.16,2.4),new THREE.MeshStandardMaterial({color:ORANGE}));
-  edge.position.set(0,1.5,-0.2); edge.rotation.x=-0.5; creature.add(edge);
-  // cat billboard riding the fin
-  let cat=null;
-  new THREE.TextureLoader().load('assets/mascot_color.png',function(tex){
-    cat=new THREE.Mesh(new THREE.PlaneGeometry(5.2,5.65),new THREE.MeshBasicMaterial({map:tex,transparent:true}));
-    cat.position.set(0,3.4,-0.2); creature.add(cat);
-  });
+  let logo=null;
+  new THREE.FBXLoader().load('assets/logo.fbx',function(obj){
+    // keep the FBX's own ZBrush polypaint (vertex colours); just brighten the
+    // base colour so the paint reads at full saturation, and cast shadows
+    obj.traverse(function(ch){ if(ch.isMesh){ ch.castShadow=true;
+      const mats=Array.isArray(ch.material)?ch.material:[ch.material];
+      mats.forEach(function(m){ m.vertexColors=true; if(m.color) m.color.setHex(0xffffff); m.needsUpdate=true; }); }});
+    // FBXLoader already brings it in Y-up; just measure as-is
+    obj.updateMatrixWorld(true);
+    // normalise: center on origin, scale to ~5.8 units tall
+    const box=new THREE.Box3().setFromObject(obj);
+    const size=new THREE.Vector3(); box.getSize(size);
+    const center=new THREE.Vector3(); box.getCenter(center);
+    const s=5.8/Math.max(size.y,0.001); obj.scale.setScalar(s);
+    obj.position.set(-center.x*s,-center.y*s,-center.z*s);
+    // pivot sits at the waterline where the fin used to be; faces the chase camera
+    const pivot=new THREE.Group(); pivot.add(obj);
+    pivot.position.set(0,2.9,0); pivot.rotation.y=Math.PI;
+    creature.add(pivot); logo=pivot;
+  },undefined,function(err){ document.getElementById('load').textContent='logo.fbx 加载失败'; });
   // wake: foam trail behind + foam ring at base
   const wakeMat=new THREE.MeshBasicMaterial({color:CREAM,transparent:true,opacity:.32,depthWrite:false});
   const wake=new THREE.Mesh(new THREE.PlaneGeometry(3.4,16),wakeMat);
@@ -232,8 +237,7 @@
       const d=Math.hypot(g.position.x-cx,g.position.z-cz); if(d<7&&(!nearBuoy||d<nearBuoy._d)){nearBuoy=g;nearBuoy._d=d;} });
     if(nearBuoy){promptName.textContent=nearBuoy.userData.label;prompt.classList.add('on');}else prompt.classList.remove('on');
 
-    // cat billboard faces camera (upright)
-    if(cat) cat.lookAt(camera.position.x, cat.getWorldPosition(tmp).y, camera.position.z);
+    // (logo rides upright with the creature group; no extra spin)
 
     // chase camera (also rides waves a touch)
     tmp.set(cx - fx*16, hC+8.5, cz - fz*16);
