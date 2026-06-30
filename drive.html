@@ -104,9 +104,9 @@
     const center=new THREE.Vector3(); box.getCenter(center);
     const s=5.8/Math.max(size.y,0.001); obj.scale.setScalar(s);
     obj.position.set(-center.x*s,-center.y*s,-center.z*s);
-    // pivot sits at the waterline where the fin used to be; faces the chase camera
+    // pivot rides the creature: sunk into the water, nose pointing along the heading
     const pivot=new THREE.Group(); pivot.add(obj);
-    pivot.position.set(0,2.9,0); pivot.rotation.y=Math.PI;
+    pivot.position.set(0,1.45,0); pivot.rotation.y=Math.PI/2;
     creature.add(pivot); logo=pivot;
   },undefined,function(err){ document.getElementById('load').textContent='logo.fbx 加载失败'; });
   // wake: foam trail behind + foam ring at base
@@ -196,14 +196,21 @@
     for(let i=0;i<pos.count;i++){ pos.setY(i, waveH(baseXZ[i*2],baseXZ[i*2+1],t)); }
     pos.needsUpdate=true; oceanGeo.computeVertexNormals();
 
-    // throttle from keys or joystick Y (analog); coasts to a stop otherwise
-    const thr=(keys.f?1:0)-(keys.b?1:0)+jy;
-    if(thr>0.05) speed+=ACC*Math.min(1,thr); else if(thr<-0.05) speed-=ACC*0.8*Math.min(1,-thr);
+    // absolute steering: the stick (or arrow keys) point where you want to go;
+    // the surfer turns to face that world heading and accelerates that way
+    let ix=(keys.r?1:0)-(keys.l?1:0)+jx;          // screen right +
+    let iy=(keys.f?1:0)-(keys.b?1:0)+jy;          // screen up (into scene) +
+    let mag=Math.hypot(ix,iy);
+    if(mag>0.12){
+      if(mag>1){ ix/=mag; iy/=mag; mag=1; }
+      const target=Math.atan2(-ix, iy);           // screen dir -> world heading
+      let d=target-angle; d=Math.atan2(Math.sin(d),Math.cos(d)); // shortest arc
+      angle += d*0.18;
+      speed += ACC*mag;
+    }
     speed*=FR;
-    speed=Math.max(-MAX*0.45, Math.min(MAX,speed));
-    if(Math.abs(speed)<0.0015) speed=0;
-    const steer=(keys.l?1:0)-(keys.r?1:0)-jx*1.1;
-    angle += steer*TURN;
+    speed=Math.min(MAX,Math.max(0,speed));
+    if(speed<0.0015) speed=0;
     const fx=Math.sin(angle), fz=Math.cos(angle);
     creature.position.x += fx*speed; creature.position.z += fz*speed;
     const r=Math.hypot(creature.position.x,creature.position.z); if(r>120){creature.position.x*=120/r;creature.position.z*=120/r;}
@@ -220,10 +227,10 @@
     wake.position.set(cx-fx*8, hC+0.06, cz-fz*8); wake.rotation.z=0; wake.rotation.y=angle; wakeMat.opacity=0.32*wsp;
     ring.position.set(cx, hC+0.05, cz); const rp=1+Math.sin(t*5)*0.12; ring.scale.set(rp,rp,rp); ringMat.opacity=0.5*wsp;
 
-    // spray at the fin tip
+    // spray kicks up whenever the surfer is moving (any direction)
     const apos=sprayGeo.attributes.position;
     for(let i=0;i<SPN;i++){ const p=spv[i];
-      if(p.life<=0){ if(speed>0.2 && Math.random()<0.5){ p.life=0.6+Math.random()*0.4;
+      if(p.life<=0){ if(speed>0.08 && Math.random()<0.5){ p.life=0.6+Math.random()*0.4;
           p.x=cx+(Math.random()-.5)*1.4; p.y=hC+0.6; p.z=cz+(Math.random()-.5)*1.4;
           p.vx=fx*0.2+(Math.random()-.5)*0.18; p.vy=0.18+Math.random()*0.16; p.vz=fz*0.2+(Math.random()-.5)*0.18;
         } else { apos.setXYZ(i,0,-99,0); continue; } }
