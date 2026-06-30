@@ -21,12 +21,13 @@
   .prompt{left:50%;bottom:calc(120px + env(safe-area-inset-bottom));transform:translateX(-50%);
     font-family:"Space Mono",monospace;font-size:14px;background:rgba(14,34,48,.9);color:#F4EEE2;padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s}
   .prompt.on{opacity:1}.prompt b{color:#F2901C}
-  .pad{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));z-index:11;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;display:none}
-  .pad.l{left:20px}.pad.r{right:20px;display:flex;gap:12px}
-  .key{width:60px;height:60px;border-radius:14px;border:2px solid #17130E;background:rgba(244,238,226,.92);
-    box-shadow:3px 3px 0 #17130E;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#17130E}
-  .key:active{transform:translate(3px,3px);box-shadow:0 0 0;background:#F2901C}
-  @media (hover:none){.pad{display:flex}.help{display:none}}
+  .joy{position:fixed;left:max(22px,env(safe-area-inset-left));bottom:calc(26px + env(safe-area-inset-bottom));z-index:11;
+    width:124px;height:124px;border-radius:50%;border:2px solid #17130E;background:rgba(244,238,226,.5);
+    box-shadow:3px 3px 0 #17130E;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;display:none}
+  .stick{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;
+    border:2px solid #17130E;background:#F2901C;box-shadow:2px 2px 0 #17130E;will-change:transform}
+  .prompt{pointer-events:auto}
+  @media (hover:none){.joy{display:block}.help{display:none}}
   .load{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:#7FC9EC;
     font-family:"Space Mono",monospace;font-size:13px;letter-spacing:.18em;color:#0e2230}
 </style>
@@ -41,8 +42,7 @@
   </div>
 </div>
 <div class="ui prompt" id="prompt">靠近了 <b id="promptName"></b> · 按 ENTER 进入</div>
-<div class="pad l"><div class="key" id="kL">◀</div></div>
-<div class="pad r"><div class="key" id="kU">▲</div><div class="key" id="kR">▶</div></div>
+<div class="joy" id="joy"><div class="stick" id="stick"></div></div>
 <div class="load" id="load">起航中…  LOADING</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -160,13 +160,30 @@
   addEventListener('keydown',e=>{ if(map[e.code]){keys[map[e.code]]=true; if(e.code.indexOf('Arrow')===0)e.preventDefault();}
     if(e.code==='Enter'&&nearBuoy)location.href=nearBuoy.userData.href; });
   addEventListener('keyup',e=>{ if(map[e.code])keys[map[e.code]]=false; });
-  function touch(id,k){const el=document.getElementById(id);const on=e=>{e.preventDefault();keys[k]=true;},off=e=>{e.preventDefault();keys[k]=false;};
-    el.addEventListener('touchstart',on,{passive:false});el.addEventListener('touchend',off);el.addEventListener('touchcancel',off);
-    el.addEventListener('mousedown',on);el.addEventListener('mouseup',off);el.addEventListener('mouseleave',off);}
-  touch('kU','f');touch('kL','l');touch('kR','r');
+  // mobile virtual joystick: analog steer (x) + throttle (y)
+  let jx=0, jy=0;
+  (function(){ const joy=document.getElementById('joy'), stick=document.getElementById('stick'); if(!joy) return;
+    let pid=null, ox=0, oy=0; const R=44;
+    function set(px,py){ let dx=px-ox, dy=py-oy; const d=Math.hypot(dx,dy);
+      if(d>R){ dx=dx/d*R; dy=dy/d*R; } stick.style.transform='translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px)';
+      jx=dx/R; jy=-dy/R; }
+    function pick(e){ if(e.changedTouches){ for(const t of e.changedTouches){ if(t.identifier===pid) return t; } return null; } return e; }
+    function down(e){ const r=joy.getBoundingClientRect(); ox=r.left+r.width/2; oy=r.top+r.height/2;
+      pid=e.changedTouches?e.changedTouches[0].identifier:'m'; const p=e.changedTouches?e.changedTouches[0]:e;
+      set(p.clientX,p.clientY); e.preventDefault(); }
+    function move(e){ if(pid===null) return; const p=pick(e); if(!p) return; set(p.clientX,p.clientY); e.preventDefault(); }
+    function up(){ pid=null; jx=0; jy=0; stick.style.transform='translate(0,0)'; }
+    joy.addEventListener('touchstart',down,{passive:false}); joy.addEventListener('touchmove',move,{passive:false});
+    joy.addEventListener('touchend',up); joy.addEventListener('touchcancel',up);
+    joy.addEventListener('mousedown',down); addEventListener('mousemove',move); addEventListener('mouseup',up);
+  })();
+  // tap the proximity prompt to enter a buoy (mobile has no ENTER key)
+  document.getElementById('prompt').addEventListener('click',()=>{ if(nearBuoy)location.href=nearBuoy.userData.href; });
 
   let speed=0, angle=0; const MAX=0.6, ACC=0.02, FR=0.94, TURN=0.034;
-  const camPos=new THREE.Vector3(0,9,18), tmp=new THREE.Vector3();
+  // fixed-angle follow camera: constant world-space offset, pulled back (Bruno-Simon style)
+  const CAM_OFF=new THREE.Vector3(7,20,-32);
+  const camPos=new THREE.Vector3().copy(CAM_OFF), tmp=new THREE.Vector3();
   addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
   document.getElementById('load').style.display='none';
 
@@ -179,12 +196,13 @@
     for(let i=0;i<pos.count;i++){ pos.setY(i, waveH(baseXZ[i*2],baseXZ[i*2+1],t)); }
     pos.needsUpdate=true; oceanGeo.computeVertexNormals();
 
-    // forward only while a key is held; coasts to a stop otherwise
-    if(keys.f) speed+=ACC; else if(keys.b) speed-=ACC*0.8;
+    // throttle from keys or joystick Y (analog); coasts to a stop otherwise
+    const thr=(keys.f?1:0)-(keys.b?1:0)+jy;
+    if(thr>0.05) speed+=ACC*Math.min(1,thr); else if(thr<-0.05) speed-=ACC*0.8*Math.min(1,-thr);
     speed*=FR;
     speed=Math.max(-MAX*0.45, Math.min(MAX,speed));
     if(Math.abs(speed)<0.0015) speed=0;
-    const steer=(keys.l?1:0)-(keys.r?1:0);
+    const steer=(keys.l?1:0)-(keys.r?1:0)-jx*1.1;
     angle += steer*TURN;
     const fx=Math.sin(angle), fz=Math.cos(angle);
     creature.position.x += fx*speed; creature.position.z += fz*speed;
@@ -239,10 +257,11 @@
 
     // (logo rides upright with the creature group; no extra spin)
 
-    // chase camera (also rides waves a touch)
-    tmp.set(cx - fx*16, hC+8.5, cz - fz*16);
-    camPos.lerp(tmp,0.06); camera.position.copy(camPos);
-    camera.lookAt(cx, hC+2.2, cz);
+    // fixed-angle follow camera: stays on the same world side & height no matter how
+    // you steer (no more view-swing), just glides to keep the surfer framed, pulled back
+    tmp.set(cx + CAM_OFF.x, CAM_OFF.y, cz + CAM_OFF.z);
+    camPos.lerp(tmp,0.08); camera.position.copy(camPos);
+    camera.lookAt(cx, 2.4, cz);
 
     renderer.render(scene,camera);
     requestAnimationFrame(frame);
